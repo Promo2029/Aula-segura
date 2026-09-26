@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AulaOrganizada - IA Educativa</title>
+    <!-- Librería para leer archivos .docx de Word directamente en el navegador -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -28,7 +30,7 @@
                 flex-direction: row;
             }
             .sidebar {
-                width: 260px;
+                width: 270px;
                 min-height: 100vh;
             }
             .content {
@@ -46,26 +48,38 @@
             font-size: 1.4rem;
             color: #4f46e5;
             margin-bottom: 20px;
+        }
+
+        .stats-container {
             display: flex;
-            align-items: center;
-            gap: 8px;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            flex: 1;
+            color: white;
+            padding: 12px 8px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.9rem;
         }
 
         .streak-card {
             background: linear-gradient(135deg, #ff9d00, #ff5500);
-            color: white;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: bold;
             box-shadow: 0 4px 6px rgba(255, 123, 0, 0.2);
         }
 
-        .streak-card .streak-count {
-            font-size: 1.8rem;
+        .coins-card {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+        }
+
+        .stat-card .stat-count {
+            font-size: 1.4rem;
             display: block;
-            margin-top: 5px;
+            margin-top: 4px;
         }
 
         .menu-item {
@@ -119,7 +133,7 @@
 
         .option-label {
             display: block;
-            margin: 6px 0;
+            margin: 8px 0;
             cursor: pointer;
             font-size: 0.95rem;
         }
@@ -134,7 +148,6 @@
             font-weight: bold;
             width: 100%;
             font-size: 1rem;
-            transition: background 0.2s;
         }
 
         .btn-primary:hover {
@@ -169,6 +182,12 @@
             border-radius: 8px;
             background: #f8fafc;
         }
+
+        #statusMessage {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #4f46e5;
+        }
     </style>
 </head>
 <body>
@@ -177,28 +196,36 @@
     <div class="sidebar">
         <h2>📚 AulaOrganizada</h2>
         
-        <div class="streak-card">
-            🔥 Racha de Estudio
-            <span class="streak-count" id="streakDisplay">0 Días</span>
+        <div class="stats-container">
+            <div class="stat-card streak-card">
+                🔥 Racha
+                <span class="stat-count" id="streakDisplay">0 Días</span>
+            </div>
+            <div class="stat-card coins-card">
+                🪙 Monedas
+                <span class="stat-count" id="coinsDisplay">0</span>
+            </div>
         </div>
 
         <a href="#" class="menu-item active">🏠 Inicio</a>
         <a href="#" class="menu-item">📝 Tareas</a>
         <a href="#" class="menu-item">🤖 Exámenes e IA</a>
+        <a href="#" class="menu-item">🛒 Tienda (Próximamente)</a>
     </div>
 
     <div class="content">
         <h1>Centro de Estudio e Inteligencia Artificial</h1>
-        <p style="color: #6b7280; margin-bottom: 20px;">Sube tu material de estudio para generar evaluaciones personalizadas.</p>
+        <p style="color: #6b7280; margin-bottom: 20px;">Sube tu material (.txt o .docx de Word) para generar tu evaluación.</p>
 
         <div class="card">
             <h3>1. Cargar Documento de Estudio</h3>
-            <input type="file" id="fileInput" accept=".txt">
-            <button class="btn-primary" onclick="generateExam()">Generar Examen de 10 Preguntas</button>
+            <input type="file" id="fileInput" accept=".txt, .docx">
+            <button class="btn-primary" onclick="handleFileUpload()">Generar Examen de 10 Preguntas</button>
+            <div id="statusMessage"></div>
         </div>
 
         <div class="card" id="examContainer" style="display: none;">
-            <h3 id="examTitle">Examen Generado por IA</h3>
+            <h3 id="examTitle">Examen Generado</h3>
             <form id="quizForm">
                 <div id="questionsList"></div>
                 <button type="button" class="btn-primary" onclick="evaluateExam()" style="margin-top: 15px;">Enviar y Calificar Examen</button>
@@ -213,65 +240,88 @@
 </div>
 
 <script>
-    // Manejo de la racha
+    // Variables guardadas en el navegador
     let streak = parseInt(localStorage.getItem('userStreak')) || 0;
+    let coins = parseInt(localStorage.getItem('userCoins')) || 0;
     let lastExamDate = localStorage.getItem('lastExamDate') || "";
 
-    function updateStreakDisplay() {
+    function updateStatsDisplay() {
         document.getElementById('streakDisplay').innerText = `${streak} ${streak === 1 ? 'Día' : 'Días'}`;
+        document.getElementById('coinsDisplay').innerText = `${coins}`;
     }
 
-    updateStreakDisplay();
+    updateStatsDisplay();
 
     let currentQuestions = [];
 
-    function generateExam() {
+    function handleFileUpload() {
         const fileInput = document.getElementById('fileInput');
+        const status = document.getElementById('statusMessage');
         const file = fileInput.files[0];
 
-        if (file) {
+        if (!file) {
+            status.innerText = "Procesando examen general de prueba...";
+            buildQuestionsFromText("", "Conocimiento General");
+            return;
+        }
+
+        status.innerText = "Leyendo archivo y procesando preguntas...";
+
+        const fileName = file.name.toLowerCase();
+
+        if (fileName.endsWith('.docx')) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                const text = e.target.result;
-                buildQuestionsFromText(text, file.name);
+                mammoth.extractRawText({arrayBuffer: e.target.result})
+                    .then(function(result) {
+                        status.innerText = "";
+                        buildQuestionsFromText(result.value, file.name);
+                    })
+                    .catch(function(err) {
+                        status.innerText = "Error al leer el archivo Word. Intenta guardarlo nuevamente o usar .txt.";
+                    });
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                status.innerText = "";
+                buildQuestionsFromText(e.target.result, file.name);
             };
             reader.readAsText(file, "UTF-8");
-        } else {
-            // Examen general por defecto
-            buildQuestionsFromText("", "Conocimiento General");
         }
     }
 
     function buildQuestionsFromText(text, sourceName) {
-        // Generación dinámica de 10 preguntas
         const cleanText = text.trim();
+        // Extrae palabras significativas del texto subido
         const words = cleanText.split(/\s+/).filter(w => w.length > 4);
 
         currentQuestions = [];
 
         for (let i = 1; i <= 10; i++) {
-            let topicWord = words[i * 2] || `Concepto #${i}`;
+            let topicWord = words[i * 3] || words[i] || `Concepto Clave #${i}`;
             topicWord = topicWord.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, "");
 
-            if (text.length > 0) {
+            if (cleanText.length > 0) {
                 currentQuestions.push({
-                    q: `Según el documento "${sourceName}", ¿cuál es una afirmación correcta respecto a "${topicWord}"?`,
+                    q: `Según el material "${sourceName}", ¿cuál es el aspecto principal relacionado con "${topicWord}"?`,
                     options: [
-                        `Es un elemento clave presentado en el texto sobre ${topicWord}.`,
-                        `Es un concepto secundario sin relevancia técnica.`,
-                        `No corresponde al tema tratado en el archivo.`,
-                        `Es una teoría descartada por el autor.`
+                        `Es un fundamento clave explicado dentro de ${sourceName}.`,
+                        `Es un aspecto secundario sin relevancia técnica.`,
+                        `No corresponde a la temática expuesta.`,
+                        `Es un concepto omitido en la lectura.`
                     ],
                     correct: 0
                 });
             } else {
                 currentQuestions.push({
-                    q: `Pregunta ${i}: ¿Cuál es el procedimiento correcto para mantener un plan de estudio efectivo?`,
+                    q: `Pregunta ${i}: ¿Cuál es una buena práctica recomendada de estudio?`,
                     options: [
-                        `Estudiar de manera constante todos los días.`,
-                        `Estudiar únicamente el día antes del examen.`,
-                        `No repasar los contenidos anteriores.`,
-                        `Memorizar sin comprender el tema.`
+                        `Repasar de forma constante y hacer autoevaluaciones.`,
+                        `Estudiar solo unos minutos antes de la prueba.`,
+                        `Evitar tomar apuntes o resúmenes.`,
+                        `Memorizar conceptos sin comprenderlos.`
                     ],
                     correct: 0
                 });
@@ -315,7 +365,7 @@
             }
         });
 
-        // Calificación escala colombiana 1.0 a 5.0 (Cada pregunta vale 0.4 + base 1.0)
+        // Escala colombiana 1.0 a 5.0
         let grade = (1.0 + (correctAnswers * 0.4)).toFixed(1);
         if (grade > 5.0) grade = "5.0";
 
@@ -330,20 +380,26 @@
 
         if (grade >= 3.0) {
             resultBox.className = "result-box result-pass";
-            feedbackText.innerText = `¡Felicidades! Aprobaste con ${correctAnswers} de 10 respuestas correctas.`;
+            
+            // Otorgar 20 monedas por aprobar
+            coins += 20;
+            localStorage.setItem('userCoins', coins);
 
-            // Aumentar racha solo si no ha presentado examen hoy
+            let bonusText = " 🪙 ¡Aprobaste y ganaste +20 monedas!";
+
             if (lastExamDate !== today) {
                 streak++;
                 lastExamDate = today;
                 localStorage.setItem('userStreak', streak);
                 localStorage.setItem('lastExamDate', today);
-                updateStreakDisplay();
-                feedbackText.innerText += " 🔥 ¡Has aumentado tu racha de estudio +1 día!";
+                bonusText += " 🔥 ¡Aumentaste tu racha de estudio +1 día!";
             }
+
+            feedbackText.innerText = `¡Felicidades! Obtuviste ${correctAnswers} de 10 respuestas correctas.` + bonusText;
+            updateStatsDisplay();
         } else {
             resultBox.className = "result-box result-fail";
-            feedbackText.innerText = `Obtuviste ${correctAnswers} de 10 correctas. Necesitas mínimo 3.0 para aprobar. ¡Sigue repasando!`;
+            feedbackText.innerText = `Obtuviste ${correctAnswers} de 10 correctas. Necesitas mínimo 3.0 para aprobar y ganar monedas. ¡Sigue intentando!`;
         }
     }
 </script>
