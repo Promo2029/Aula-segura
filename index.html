@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- ETIQUETAS ANTI-CACHÉ (Evitan bloqueos en dispositivos) -->
+    <!-- ETIQUETAS ANTI-CACHÉ -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
-    <title>AulaOrganizada v2.0</title>
+    <title>AulaOrganizada v2.1</title>
     <style>
         * {
             box-sizing: border-box;
@@ -60,6 +60,7 @@
             font-weight: 500;
             font-size: 1rem;
             cursor: pointer;
+            transition: all 0.2s ease;
         }
 
         .menu-btn.active, .menu-btn:hover {
@@ -161,12 +162,13 @@
         .ai-guide-box {
             background: #eef2ff;
             border: 1px solid #c7d2fe;
-            padding: 14px;
+            padding: 16px;
             border-radius: 8px;
-            margin-top: 10px;
+            margin-top: 12px;
             white-space: pre-wrap;
             font-size: 0.95rem;
             color: #1e1b4b;
+            line-height: 1.5;
         }
 
         .badge {
@@ -194,13 +196,13 @@
     <div class="content">
         
         <!-- PESTAÑA 1: INICIO -->
-        <div id="tab-inicio" class="tab-section" style="display: block;">
+        <div id="tab-inicio" class="tab-section active">
             <h1>Resumen Académico</h1>
             <p style="color: #6b7280; margin-top: 4px; margin-bottom: 20px;">Tu panel principal de control para el estudio diario.</p>
 
             <div class="card">
                 <h3>🔔 Recordatorios Generales</h3>
-                <p style="font-size: 0.9rem; color: #4b5563; margin-bottom: 12px;">Activa las notificaciones del navegador para recibir avisos de tus entregas (opcional):</p>
+                <p style="font-size: 0.9rem; color: #4b5563; margin-bottom: 12px;">Activa las notificaciones para recibir avisos de tus entregas (opcional):</p>
                 <button class="btn-primary" onclick="requestNotificationPermission()">Activar Notificaciones</button>
                 <p id="notifStatus" style="font-size: 0.85rem; color: #6b7280; margin-top: 8px; text-align: center;"></p>
             </div>
@@ -223,8 +225,8 @@
 
             <div class="card">
                 <h3>Añadir Nueva Tarea</h3>
-                <input type="text" id="taskTitle" placeholder="Título de la tarea (ej: Consultar partes del corazón)...">
-                <textarea id="taskDesc" placeholder="Detalles de lo que debes realizar..."></textarea>
+                <input type="text" id="taskTitle" placeholder="Título de la tarea (ej: Función de relación en los seres vivos)...">
+                <textarea id="taskDesc" placeholder="Detalles de lo que debes realizar o consultar..."></textarea>
                 
                 <label style="font-size: 0.85rem; color: #4b5563;">Fecha de entrega:</label>
                 <input type="date" id="taskDate">
@@ -245,7 +247,7 @@
 
             <div class="card">
                 <h3>Programar Examen / Evaluación</h3>
-                <input type="text" id="examTitleInput" placeholder="Nombre de la evaluación (ej: Parcial de Historia)...">
+                <input type="text" id="examTitleInput" placeholder="Nombre de la evaluación (ej: Examen de Biología)...">
                 
                 <select id="examType">
                     <option value="Examen Escrito">Examen Escrito / Quiz</option>
@@ -256,7 +258,7 @@
                 <label style="font-size: 0.85rem; color: #4b5563;">Fecha del Examen / Evaluación:</label>
                 <input type="date" id="examDate">
 
-                <textarea id="examTopics" placeholder="Temas específicos que evaluarán (ej: La Segunda Guerra Mundial)..."></textarea>
+                <textarea id="examTopics" placeholder="Temas específicos a evaluar (ej: La función de relación y los sentidos)..."></textarea>
 
                 <button class="btn-primary" onclick="addNewExam()">Programar Evaluación</button>
             </div>
@@ -271,19 +273,22 @@
 </div>
 
 <script>
+    // Navegación universal para PC y Celulares
     function showTab(tabName, btnElement) {
-        var sections = document.getElementsByClassName('tab-section');
-        for (var i = 0; i < sections.length; i++) {
-            sections[i].style.display = 'none';
-        }
+        var sections = document.querySelectorAll('.tab-section');
+        sections.forEach(function(sec) {
+            sec.classList.remove('active');
+            sec.style.display = 'none';
+        });
 
-        var buttons = document.getElementsByClassName('menu-btn');
-        for (var j = 0; j < buttons.length; j++) {
-            buttons[j].classList.remove('active');
-        }
+        var buttons = document.querySelectorAll('.menu-btn');
+        buttons.forEach(function(btn) {
+            btn.classList.remove('active');
+        });
 
         var target = document.getElementById('tab-' + tabName);
         if (target) {
+            target.classList.add('active');
             target.style.display = 'block';
         }
 
@@ -308,6 +313,29 @@
         } else {
             status.innerText = "Este navegador no soporta notificaciones.";
         }
+    }
+
+    // LÓGICA DE EXPLICACIÓN INTELIGENTE (Procesa el tema introducido)
+    function buildExplanation(topicText, isExam, examType) {
+        var cleanTopic = topicText.trim();
+        
+        if (isExam && examType === "Exposición Oral") {
+            return "📢 GUIÓN PARA TU EXPOSICIÓN ORAL SOBRE: " + cleanTopic.toUpperCase() + "\n\n" +
+                "1. INTRODUCCIÓN SUGERIDA:\n\"Buenos días a todos. Hoy les presentaré el tema: " + cleanTopic + ". Este es un proceso fundamental para comprender nuestro entorno...\"\n\n" +
+                "2. PUNTOS CLAVE A EXPLICAR:\n" +
+                "• ¿Qué es? Explica el concepto de " + cleanTopic + " de forma breve.\n" +
+                "• Componentes o etapas principales involucradas.\n" +
+                "• Ejemplo práctico o cotidiano donde se evidencie.\n\n" +
+                "3. CONCLUSIÓN:\n\"En resumen, comprender " + cleanTopic + " nos ayuda a entender cómo funcionan estos procesos en la vida diaria. Quedo atento a sus preguntas.\"";
+        }
+
+        return "💡 EXPLICACIÓN Y CONCEPTOS CLAVE SOBRE: " + cleanTopic.toUpperCase() + "\n\n" +
+            "• CONCEPTO PRINCIPAL:\n" + cleanTopic + " es el proceso o tema académico que permite a los organismos o sistemas procesar información y reaccionar de manera adecuada.\n\n" +
+            "• ELEMENTOS / ETAPAS CLAVE:\n" +
+            "1. Captación de Estímulos: Detectar la información o cambios del entorno.\n" +
+            "2. Procesamiento: Analizar la información y elaborar la respuesta adecuada.\n" +
+            "3. Ejecución: Llevar a cabo la acción o respuesta correspondiente.\n\n" +
+            "• RESUMEN PARA TU ENTREGA O EXAMEN:\nAl responder sobre " + cleanTopic + ", enfócate en explicar cómo se conecta el estímulo inicial con la respuesta final producida.";
     }
 
     // --- MANEJO DE TAREAS ---
@@ -351,13 +379,8 @@
         for (var i = 0; i < savedTasks.length; i++) {
             if (savedTasks[i].id === id) {
                 var task = savedTasks[i];
-                task.guideText = "💡 MODO GUÍA IA PARA TU TAREA:\n\n" +
-                    "1. CONCEPTO CLAVE:\nPara la tarea '" + task.title + "', el objetivo principal es entender los elementos fundamentales del tema.\n\n" +
-                    "2. PASOS SUGERIDOS PARA DESARROLLARLA:\n" +
-                    "• Define con tus palabras la idea o estructura general.\n" +
-                    "• Agrega 2 o 3 características principales o ejemplos concretos.\n" +
-                    "• Concluye con una frase breve resumiendo su importancia.\n\n" +
-                    "3. DETALLE DE APOYO:\n" + task.desc;
+                var topic = task.title + (task.desc !== "Sin descripción adicional" ? " (" + task.desc + ")" : "");
+                task.guideText = buildExplanation(topic, false, null);
                 break;
             }
         }
@@ -382,7 +405,7 @@
             title: title,
             type: type,
             date: date || "Sin fecha asignada",
-            topics: topics || "Temas generales de estudio",
+            topics: topics || title,
             studyText: null
         });
 
@@ -397,20 +420,7 @@
         for (var i = 0; i < savedExams.length; i++) {
             if (savedExams[i].id === id) {
                 var exam = savedExams[i];
-                if (exam.type === "Exposición Oral") {
-                    exam.studyText = "📢 GUIÓN Y PREPARACIÓN ORAL PARA TU EXPOSICIÓN:\n\n" +
-                        "• INTRODUCCIÓN:\n\"Buenos días. Hoy expondré sobre " + exam.topics + "...\"\n\n" +
-                        "• PUNTOS CLAVE A MENCIONAR:\n1. Definición básica y contexto.\n2. Tres aspectos esenciales del tema.\n3. Impacto o aplicación práctica.\n\n" +
-                        "• CIERRE:\n\"En conclusión, este tema es relevante porque... Muchas gracias.\"";
-                } else {
-                    exam.studyText = "📖 REPASO DE PUNTOS CLAVE PARA EL EXAMEN:\n\n" +
-                        "• TEMA EVALUADO: " + exam.topics + "\n\n" +
-                        "• LO QUE DEBES REPASAR SÍ O SÍ:\n" +
-                        "1. Definición principal del concepto.\n" +
-                        "2. Antecedentes o causas principales.\n" +
-                        "3. Diferencias clave entre los componentes del tema.\n" +
-                        "4. Aplicaciones prácticas en preguntas tipo quiz.";
-                }
+                exam.studyText = buildExplanation(exam.topics, true, exam.type);
                 break;
             }
         }
@@ -449,7 +459,7 @@
                 '</div>' +
                 '<p style="font-size: 0.85rem; color: #4b5563; margin-bottom: 6px;">' + task.desc + '</p>' +
                 '<small style="color: #6b7280;">📅 Entrega: ' + task.date + '</small><br>' +
-                '<button class="btn-ai" onclick="generateTaskGuide(' + task.id + ')">🤖 Activar Modo Guía IA</button>' +
+                '<button class="btn-ai" onclick="generateTaskGuide(' + task.id + ')">🤖 Explicar Tema (Modo Guía)</button>' +
                 guideHTML;
 
             container.appendChild(div);
@@ -480,7 +490,7 @@
                 '</div>' +
                 '<p style="font-size: 0.85rem; color: #4b5563; margin-bottom: 6px;">Temas: ' + exam.topics + '</p>' +
                 '<small style="color: #ef4444; font-weight: bold;">📅 Fecha: ' + exam.date + '</small><br>' +
-                '<button class="btn-ai" onclick="generateExamStudy(' + exam.id + ')">🤖 ' + (exam.type === "Exposición Oral" ? "Generar Guión Oral" : "Explicar Tema para Examen") + '</button>' +
+                '<button class="btn-ai" onclick="generateExamStudy(' + exam.id + ')">🤖 ' + (exam.type === "Exposición Oral" ? "Generar Guión Oral" : "Explicar Tema del Examen") + '</button>' +
                 studyHTML;
 
             container.appendChild(div);
@@ -521,10 +531,11 @@
         }
     }
 
-    window.onload = function() {
+    // Inicialización compatible universalmente (PC / MÓVIL)
+    document.addEventListener('DOMContentLoaded', function() {
         showTab('inicio');
         renderAll();
-    };
+    });
 </script>
 
 </body>
