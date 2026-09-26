@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AulaOrganizada v4.0</title>
+    <title>AulaOrganizada v5.0</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f4f6f9; color: #333; }
@@ -59,7 +59,7 @@
     <div class="sidebar">
         <h2>📚 AulaOrganizada</h2>
         
-        <!-- SECCIÓN DE GAMIFICACIÓN -->
+        <!-- ESTADÍSTICAS DE GAMIFICACIÓN -->
         <div class="stats-container">
             <div class="stat-box">🔥 Racha<span id="rachaDisplay">0 días</span></div>
             <div class="stat-box">🪙 Monedas<span id="monedasDisplay">0</span></div>
@@ -74,7 +74,7 @@
         <!-- PESTAÑA INICIO -->
         <div id="tab-inicio" class="tab-section active">
             <h1>Resumen Académico</h1>
-            <p style="color: #6b7280; margin-bottom: 20px;">Tu panel principal de control.</p>
+            <p style="color: #6b7280; margin-bottom: 20px;">Tu panel principal de control y gamificación.</p>
             
             <div class="card">
                 <h3>🔔 Recordatorios Generales</h3>
@@ -129,38 +129,33 @@
 
 <script>
     // ==========================================
-    // 1. CONFIGURACIÓN DE GEMINI Y VARIABLES
+    // 1. CONFIGURACIÓN DE LA API KEY DE GEMINI
     // ==========================================
-    
-    // 🔑 PEGA TU CLAVE JUSTO AQUÍ ADENTRO DE LAS COMILLAS:
     const GEMINI_API_KEY = "TU_CLAVE_AQUI"; 
 
+    // ==========================================
+    // 2. ESTADO Y GAMIFICACIÓN (RACHA Y MONEDAS)
+    // ==========================================
     let savedTasks = JSON.parse(localStorage.getItem('userTasks')) || [];
     let savedExams = JSON.parse(localStorage.getItem('userExams')) || [];
     
-    // Variables de Gamificación
     let monedas = parseInt(localStorage.getItem('userMonedas')) || 0;
     let racha = parseInt(localStorage.getItem('userRacha')) || 0;
     let lastLogin = localStorage.getItem('lastLoginDate');
 
-    // ==========================================
-    // 2. LÓGICA DE GAMIFICACIÓN (RACHA Y MONEDAS)
-    // ==========================================
     function checkRacha() {
         const today = new Date().toDateString();
         if (lastLogin !== today) {
-            // Si es un nuevo día, sumar racha
             let yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
             
             if (lastLogin === yesterday.toDateString()) {
-                racha += 1; // Entró días seguidos
+                racha += 1;
             } else if (lastLogin !== null) {
-                racha = 1; // Perdió la racha, vuelve a empezar
+                racha = 1;
             } else {
-                racha = 1; // Primera vez que entra
+                racha = 1;
             }
-            
             lastLogin = today;
             localStorage.setItem('userRacha', racha);
             localStorage.setItem('lastLoginDate', lastLogin);
@@ -172,7 +167,7 @@
         monedas += cantidad;
         localStorage.setItem('userMonedas', monedas);
         updateStatsUI();
-        alert(`¡Felicidades! Has ganado ${cantidad} moneda(s). 🪙`);
+        alert(`¡Felicidades! Has ganado ${cantidad} moneda(s) 🪙`);
     }
 
     function updateStatsUI() {
@@ -181,7 +176,7 @@
     }
 
     // ==========================================
-    // 3. NAVEGACIÓN Y NOTIFICACIONES
+    // 3. NAVEGACIÓN Y UTILIDADES
     // ==========================================
     function showTab(tabName, btnElement) {
         document.querySelectorAll('.tab-section').forEach(sec => sec.classList.remove('active'));
@@ -200,7 +195,7 @@
     }
 
     // ==========================================
-    // 4. LÓGICA DE TAREAS Y EXÁMENES
+    // 4. GESTIÓN DE TAREAS Y EXÁMENES
     // ==========================================
     function addNewTask() {
         let title = document.getElementById('taskTitle').value.trim();
@@ -214,6 +209,7 @@
         
         document.getElementById('taskTitle').value = '';
         document.getElementById('taskDesc').value = '';
+        document.getElementById('taskDate').value = '';
         renderAll();
     }
 
@@ -222,7 +218,7 @@
         if (task) {
             task.completed = !task.completed;
             if(task.completed) {
-                addMonedas(5); // Te da 5 monedas al completar tarea
+                addMonedas(5);
             }
         }
         localStorage.setItem('userTasks', JSON.stringify(savedTasks));
@@ -242,28 +238,45 @@
         
         document.getElementById('examTitleInput').value = '';
         document.getElementById('examTopics').value = '';
+        document.getElementById('examDate').value = '';
         renderAll();
     }
 
     // ==========================================
-    // 5. CONEXIÓN A GEMINI (CÓDIGO ANTI-CONGELAMIENTO)
+    // 5. CONEXIÓN DIRECTA A GEMINI (ESTABLE)
     // ==========================================
     async function askGemini(promptText) {
-        if (!GEMINI_API_KEY || GEMINI_API_KEY === "AQ.Ab8RN6IVcpuGDXz299KdUvp0inByexyPa5l7inDAF_hciIYhrg") {
+        if (!GEMINI_API_KEY || GEMINI_API_KEY === "AQ.Ab8RN6Ir9qqong0Q1EwFbV3u_uEaj3OXOGZNNkcpWQQZIo3Phw") {
             return "⚠️ Error: Falta configurar la API Key de Gemini en el código.";
         }
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+        // Usamos el endpoint oficial de Gemini con v1 en lugar de v1beta para mayor compatibilidad
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        
         try {
             const response = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: promptText }] }]
+                })
             });
+
             const data = await response.json();
-            if (data.error) return "❌ Error: " + data.error.message;
-            return data.candidates[0].content.parts[0].text;
+
+            if (data.error) {
+                console.error("Detalle del error API:", data.error);
+                return "❌ Error de API: " + (data.error.message || "Clave inválida o restringida.");
+            }
+
+            if (data.candidates && data.candidates[0].content.parts[0].text) {
+                return data.candidates[0].content.parts[0].text;
+            } else {
+                return "❌ La IA no devolvió una respuesta válida.";
+            }
         } catch (error) {
-            return "❌ Error de conexión con la IA.";
+            console.error("Error de red:", error);
+            return "❌ Error de conexión al consultar Gemini.";
         }
     }
 
@@ -273,9 +286,9 @@
 
         let btn = document.getElementById(`btn-task-${id}`);
         btn.disabled = true;
-        btn.innerText = "⏳ Pensando...";
+        btn.innerText = "⏳ Consultando a la IA...";
 
-        task.guideText = await askGemini(`Explica brevemente este tema de tarea: ${task.title}. Detalles: ${task.desc}`);
+        task.guideText = await askGemini(`Explica brevemente este tema de tarea: "${task.title}". Detalles: "${task.desc}"`);
         localStorage.setItem('userTasks', JSON.stringify(savedTasks));
         renderAll();
     }
@@ -286,18 +299,18 @@
 
         let btn = document.getElementById(`btn-exam-${id}`);
         btn.disabled = true;
-        btn.innerText = "⏳ Generando...";
+        btn.innerText = "⏳ Generando guía...";
 
-        exam.studyText = await askGemini(`Genera una guía de estudio rápida para un ${exam.type} sobre: ${exam.topics || exam.title}`);
+        exam.studyText = await askGemini(`Genera una guía de estudio rápida o guión para un ${exam.type} sobre: "${exam.topics || exam.title}"`);
         localStorage.setItem('userExams', JSON.stringify(savedExams));
         renderAll();
     }
 
     // ==========================================
-    // 6. RENDERIZADO EN PANTALLA
+    // 6. RENDERIZADO VISUAL
     // ==========================================
     function renderAll() {
-        // Renderizar Tareas
+        // Tareas
         let taskCont = document.getElementById('taskListContainer');
         taskCont.innerHTML = savedTasks.map(t => `
             <div class="item-card ${t.completed ? 'completed' : ''}">
@@ -310,9 +323,9 @@
                 <button id="btn-task-${t.id}" class="btn-ai" onclick="generateTaskGuide(${t.id})">🤖 Ayuda de IA</button>
                 ${t.guideText ? `<div class="ai-guide-box">${t.guideText}</div>` : ''}
             </div>
-        `).join('') || '<p>No hay tareas.</p>';
+        `).join('') || '<p style="color: #9ca3af;">No hay tareas registradas.</p>';
 
-        // Renderizar Exámenes
+        // Exámenes
         let examCont = document.getElementById('examListContainer');
         examCont.innerHTML = savedExams.map(e => `
             <div class="item-card exam-type">
@@ -322,15 +335,15 @@
                 <button id="btn-exam-${e.id}" class="btn-ai" onclick="generateExamStudy(${e.id})">🤖 Generar Guía</button>
                 ${e.studyText ? `<div class="ai-guide-box">${e.studyText}</div>` : ''}
             </div>
-        `).join('') || '<p>No hay exámenes.</p>';
+        `).join('') || '<p style="color: #9ca3af;">No hay exámenes programados.</p>';
 
         // Resumen Inicio
         let homeTask = document.getElementById('homeTaskList');
         let pending = savedTasks.filter(t => !t.completed);
-        homeTask.innerHTML = pending.map(t => `<div><strong>${t.title}</strong> - <small>${t.date}</small></div>`).join('') || '<p>Todo al día 🎉</p>';
+        homeTask.innerHTML = pending.map(t => `<div style="padding: 6px 0; border-bottom: 1px solid #e2e8f0;"><strong>${t.title}</strong> - <small style="color: #4f46e5;">📅 ${t.date}</small></div>`).join('') || '<p style="color: #9ca3af;">Todo al día 🎉</p>';
     }
 
-    // Inicializar todo al cargar
+    // Inicializar al cargar
     window.onload = () => {
         checkRacha();
         renderAll();
