@@ -3,185 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- ETIQUETAS ANTI-CACHÉ -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-
-    <title>AulaOrganizada v3.0 (con Gemini IA en Vivo)</title>
-
+    <title>AulaOrganizada v4.0</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: #f4f6f9;
-            color: #333;
-        }
-
-        .layout {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f6f9; color: #333; }
+        .layout { display: flex; flex-direction: column; min-height: 100vh; }
         @media (min-width: 768px) {
             .layout { flex-direction: row; }
-            .sidebar { width: 270px; min-height: 100vh; }
+            .sidebar { width: 280px; min-height: 100vh; }
             .content { flex: 1; }
         }
+        
+        /* BARRA LATERAL */
+        .sidebar { background-color: #ffffff; border-right: 1px solid #e2e8f0; padding: 20px; }
+        .sidebar h2 { font-size: 1.4rem; color: #4f46e5; margin-bottom: 20px; }
+        
+        /* ESTADÍSTICAS: RACHA Y MONEDAS */
+        .stats-container { display: flex; justify-content: space-between; margin-bottom: 20px; background: #fffbe0; padding: 10px; border-radius: 8px; border: 1px solid #ffe58f; }
+        .stat-box { text-align: center; font-weight: bold; }
+        .stat-box span { display: block; font-size: 1.2rem; color: #d97706; }
 
-        .sidebar {
-            background-color: #ffffff;
-            border-right: 1px solid #e2e8f0;
-            padding: 20px;
-        }
-
-        .sidebar h2 {
-            font-size: 1.4rem;
-            color: #4f46e5;
-            margin-bottom: 20px;
-        }
-
-        .menu-btn {
-            display: block;
-            width: 100%;
-            text-align: left;
-            padding: 12px;
-            background: none;
-            border: none;
-            color: #4b5563;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            font-weight: 500;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .menu-btn.active, .menu-btn:hover {
-            background-color: #eef2ff;
-            color: #4f46e5;
-            font-weight: bold;
-        }
-
-        .content {
-            padding: 20px;
-            max-width: 900px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
+        .menu-btn { display: block; width: 100%; text-align: left; padding: 12px; background: none; border: none; color: #4b5563; border-radius: 8px; margin-bottom: 8px; font-weight: 500; font-size: 1rem; cursor: pointer; transition: 0.2s; }
+        .menu-btn.active, .menu-btn:hover { background-color: #eef2ff; color: #4f46e5; font-weight: bold; }
+        
+        /* CONTENIDO Y TARJETAS */
+        .content { padding: 20px; max-width: 900px; margin: 0 auto; width: 100%; }
         .tab-section { display: none; }
-        .tab-section.active { display: block !important; }
-
-        .card {
-            background: white;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            margin-bottom: 20px;
-        }
-
-        .card h3 {
-            margin-bottom: 15px;
-            color: #1f2937;
-        }
-
-        input[type="text"], input[type="date"], select, textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            font-size: 1rem;
-        }
-
+        .tab-section.active { display: block; }
+        .card { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
+        .card h3 { margin-bottom: 15px; color: #1f2937; }
+        
+        /* FORMULARIOS Y BOTONES */
+        input[type="text"], input[type="date"], select, textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 12px; font-size: 1rem; }
         textarea { resize: vertical; min-height: 80px; }
-
-        .btn-primary {
-            background-color: #4f46e5;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-            font-size: 1rem;
-            margin-top: 5px;
-        }
-
+        .btn-primary { background-color: #4f46e5; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1rem; margin-top: 5px; }
         .btn-primary:hover { background-color: #4338ca; }
-
-        .btn-ai {
-            background-color: #059669;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: bold;
-            margin-top: 8px;
-        }
-
+        .btn-ai { background-color: #059669; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-top: 8px; }
         .btn-ai:hover { background-color: #047857; }
         .btn-ai:disabled { background-color: #9ca3af; cursor: not-allowed; }
-
-        .item-card {
-            background: #f8fafc;
-            border-left: 4px solid #4f46e5;
-            padding: 16px;
-            border-radius: 6px;
-            margin-bottom: 12px;
-        }
-
+        
+        /* ELEMENTOS DE LISTA */
+        .item-card { background: #f8fafc; border-left: 4px solid #4f46e5; padding: 16px; border-radius: 6px; margin-bottom: 12px; }
         .item-card.exam-type { border-left-color: #ef4444; }
-
-        .item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-
-        .task-btn {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
-        }
-
-        .ai-guide-box {
-            background: #eef2ff;
-            border: 1px solid #c7d2fe;
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 12px;
-            white-space: pre-wrap;
-            font-size: 0.95rem;
-            color: #1e1b4b;
-            line-height: 1.5;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            background: #e2e8f0;
-            color: #334155;
-        }
+        .item-card.completed { opacity: 0.6; border-left-color: #10b981; }
+        .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .task-btn { background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold; }
+        
+        /* RESPUESTA DE LA IA */
+        .ai-guide-box { background: #eef2ff; border: 1px solid #c7d2fe; padding: 16px; border-radius: 8px; margin-top: 12px; white-space: pre-wrap; font-size: 0.95rem; color: #1e1b4b; line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -189,123 +58,212 @@
 <div class="layout">
     <div class="sidebar">
         <h2>📚 AulaOrganizada</h2>
+        
+        <!-- SECCIÓN DE GAMIFICACIÓN -->
+        <div class="stats-container">
+            <div class="stat-box">🔥 Racha<span id="rachaDisplay">0 días</span></div>
+            <div class="stat-box">🪙 Monedas<span id="monedasDisplay">0</span></div>
+        </div>
 
         <button class="menu-btn active" onclick="showTab('inicio', this)">🏠 Inicio</button>
         <button class="menu-btn" onclick="showTab('tareas', this)">📝 Tareas</button>
-        <button class="menu-btn" onclick="showTab('examenes', this)">📅 Exámenes y Evaluaciones</button>
+        <button class="menu-btn" onclick="showTab('examenes', this)">📅 Exámenes</button>
     </div>
 
     <div class="content">
-        
-        <!-- PESTAÑA 1: INICIO -->
+        <!-- PESTAÑA INICIO -->
         <div id="tab-inicio" class="tab-section active">
             <h1>Resumen Académico</h1>
-            <p style="color: #6b7280; margin-top: 4px; margin-bottom: 20px;">Tu panel principal de control para el estudio diario.</p>
-
+            <p style="color: #6b7280; margin-bottom: 20px;">Tu panel principal de control.</p>
+            
             <div class="card">
                 <h3>🔔 Recordatorios Generales</h3>
-                <p style="font-size: 0.9rem; color: #4b5563; margin-bottom: 12px;">Activa las notificaciones para recibir avisos de tus entregas (opcional):</p>
                 <button class="btn-primary" onclick="requestNotificationPermission()">Activar Notificaciones</button>
                 <p id="notifStatus" style="font-size: 0.85rem; color: #6b7280; margin-top: 8px; text-align: center;"></p>
             </div>
 
             <div class="card">
-                <h3>📝 Tareas Pendientes Próximas</h3>
+                <h3>📝 Tareas Pendientes</h3>
                 <div id="homeTaskList"></div>
-            </div>
-
-            <div class="card">
-                <h3>📅 Exámenes y Evaluaciones Próximas</h3>
-                <div id="homeExamList"></div>
             </div>
         </div>
 
-        <!-- PESTAÑA 2: TAREAS -->
+        <!-- PESTAÑA TAREAS -->
         <div id="tab-tareas" class="tab-section">
             <h1>Gestión de Tareas</h1>
-            <p style="color: #6b7280; margin-bottom: 20px;">Registra compromisos sencillos (consultas, ejercicios, lecturas).</p>
-
             <div class="card">
                 <h3>Añadir Nueva Tarea</h3>
-                <input type="text" id="taskTitle" placeholder="Ej: Consultar la Fotosíntesis...">
-                <textarea id="taskDesc" placeholder="Detalles de lo que debes realizar o consultar..."></textarea>
-                
-                <label style="font-size: 0.85rem; color: #4b5563;">Fecha de entrega:</label>
+                <input type="text" id="taskTitle" placeholder="Ej: Ensayo de Historia...">
+                <textarea id="taskDesc" placeholder="Detalles de la tarea..."></textarea>
                 <input type="date" id="taskDate">
-                
                 <button class="btn-primary" onclick="addNewTask()">Guardar Tarea</button>
             </div>
-
             <div class="card">
                 <h3>Mis Tareas Registradas</h3>
                 <div id="taskListContainer"></div>
             </div>
         </div>
 
-        <!-- PESTAÑA 3: EXÁMENES -->
+        <!-- PESTAÑA EXÁMENES -->
         <div id="tab-examenes" class="tab-section">
             <h1>Exámenes y Evaluaciones</h1>
-            <p style="color: #6b7280; margin-bottom: 20px;">Organiza quices, parciales y exposiciones orales con apoyo de estudio.</p>
-
             <div class="card">
-                <h3>Programar Examen / Evaluación</h3>
-                <input type="text" id="examTitleInput" placeholder="Ej: Exposición sobre la Célula...">
-                
+                <h3>Programar Examen</h3>
+                <input type="text" id="examTitleInput" placeholder="Ej: Parcial de Matemáticas...">
                 <select id="examType">
-                    <option value="Exposición Oral">Exposición Oral / Debate</option>
-                    <option value="Examen Escrito">Examen Escrito / Quiz</option>
-                    <option value="Taller Principal">Taller / Trabajo Final</option>
+                    <option value="Examen Escrito">Examen Escrito</option>
+                    <option value="Exposición Oral">Exposición Oral</option>
+                    <option value="Taller">Taller / Trabajo Final</option>
                 </select>
-
-                <label style="font-size: 0.85rem; color: #4b5563;">Fecha del Examen / Evaluación:</label>
                 <input type="date" id="examDate">
-
-                <textarea id="examTopics" placeholder="Temas específicos a evaluar..."></textarea>
-
+                <textarea id="examTopics" placeholder="Temas a evaluar..."></textarea>
                 <button class="btn-primary" onclick="addNewExam()">Programar Evaluación</button>
             </div>
-
             <div class="card">
                 <h3>Próximas Evaluaciones</h3>
                 <div id="examListContainer"></div>
             </div>
         </div>
-
     </div>
 </div>
 
 <script>
-    // 🔑 PEGA TU CLAVE DE API DENTRO DE LAS COMILLAS (Solo borra 🔑🔑🔑 y pon tu clave)
-    const GEMINI_API_KEY = "🔑🔑🔑";
+    // ==========================================
+    // 1. CONFIGURACIÓN DE GEMINI Y VARIABLES
+    // ==========================================
+    
+    // 🔑 PEGA TU CLAVE JUSTO AQUÍ ADENTRO DE LAS COMILLAS:
+    const GEMINI_API_KEY = "TU_CLAVE_AQUI"; 
 
-    // Petición HTTP directa y nativa a Google Gemini API
+    let savedTasks = JSON.parse(localStorage.getItem('userTasks')) || [];
+    let savedExams = JSON.parse(localStorage.getItem('userExams')) || [];
+    
+    // Variables de Gamificación
+    let monedas = parseInt(localStorage.getItem('userMonedas')) || 0;
+    let racha = parseInt(localStorage.getItem('userRacha')) || 0;
+    let lastLogin = localStorage.getItem('lastLoginDate');
+
+    // ==========================================
+    // 2. LÓGICA DE GAMIFICACIÓN (RACHA Y MONEDAS)
+    // ==========================================
+    function checkRacha() {
+        const today = new Date().toDateString();
+        if (lastLogin !== today) {
+            // Si es un nuevo día, sumar racha
+            let yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            if (lastLogin === yesterday.toDateString()) {
+                racha += 1; // Entró días seguidos
+            } else if (lastLogin !== null) {
+                racha = 1; // Perdió la racha, vuelve a empezar
+            } else {
+                racha = 1; // Primera vez que entra
+            }
+            
+            lastLogin = today;
+            localStorage.setItem('userRacha', racha);
+            localStorage.setItem('lastLoginDate', lastLogin);
+        }
+        updateStatsUI();
+    }
+
+    function addMonedas(cantidad) {
+        monedas += cantidad;
+        localStorage.setItem('userMonedas', monedas);
+        updateStatsUI();
+        alert(`¡Felicidades! Has ganado ${cantidad} moneda(s). 🪙`);
+    }
+
+    function updateStatsUI() {
+        document.getElementById('rachaDisplay').innerText = racha + " días";
+        document.getElementById('monedasDisplay').innerText = monedas;
+    }
+
+    // ==========================================
+    // 3. NAVEGACIÓN Y NOTIFICACIONES
+    // ==========================================
+    function showTab(tabName, btnElement) {
+        document.querySelectorAll('.tab-section').forEach(sec => sec.classList.remove('active'));
+        document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('tab-' + tabName).classList.add('active');
+        if (btnElement) btnElement.classList.add('active');
+    }
+
+    function requestNotificationPermission() {
+        if ("Notification" in window) {
+            Notification.requestPermission().then(permission => {
+                document.getElementById('notifStatus').innerText = 
+                    permission === "granted" ? "¡Notificaciones activadas!" : "Permiso denegado.";
+            });
+        }
+    }
+
+    // ==========================================
+    // 4. LÓGICA DE TAREAS Y EXÁMENES
+    // ==========================================
+    function addNewTask() {
+        let title = document.getElementById('taskTitle').value.trim();
+        let desc = document.getElementById('taskDesc').value.trim();
+        let date = document.getElementById('taskDate').value;
+
+        if (!title) return alert('Ingresa un título.');
+        
+        savedTasks.push({ id: Date.now(), title, desc, date: date || "Sin fecha", completed: false, guideText: null });
+        localStorage.setItem('userTasks', JSON.stringify(savedTasks));
+        
+        document.getElementById('taskTitle').value = '';
+        document.getElementById('taskDesc').value = '';
+        renderAll();
+    }
+
+    function toggleTask(id) {
+        let task = savedTasks.find(t => t.id === id);
+        if (task) {
+            task.completed = !task.completed;
+            if(task.completed) {
+                addMonedas(5); // Te da 5 monedas al completar tarea
+            }
+        }
+        localStorage.setItem('userTasks', JSON.stringify(savedTasks));
+        renderAll();
+    }
+
+    function addNewExam() {
+        let title = document.getElementById('examTitleInput').value.trim();
+        let type = document.getElementById('examType').value;
+        let date = document.getElementById('examDate').value;
+        let topics = document.getElementById('examTopics').value.trim();
+
+        if (!title) return alert('Ingresa un título.');
+        
+        savedExams.push({ id: Date.now(), title, type, date: date || "Sin fecha", topics, studyText: null });
+        localStorage.setItem('userExams', JSON.stringify(savedExams));
+        
+        document.getElementById('examTitleInput').value = '';
+        document.getElementById('examTopics').value = '';
+        renderAll();
+    }
+
+    // ==========================================
+    // 5. CONEXIÓN A GEMINI (CÓDIGO ANTI-CONGELAMIENTO)
+    // ==========================================
     async function askGemini(promptText) {
         if (!GEMINI_API_KEY || GEMINI_API_KEY === "AQ.Ab8RN6J7jJkg1Nl9MuXG68KjHwTbvYbt0xerwLZy31cibCHA7A") {
-            return "⚠️ Error: Falta configurar tu API Key de Gemini en el código.";
+            return "⚠️ Error: Falta configurar la API Key de Gemini en el código.";
         }
-
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-
         try {
             const response = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: promptText }] }]
-                })
+                body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
             });
-
             const data = await response.json();
-
-            if (data.error) {
-                console.error("Error de la API:", data.error);
-                return "❌ Error de Gemini: " + (data.error.message || "Clave no válida o problema de conexión.");
-            }
-
+            if (data.error) return "❌ Error: " + data.error.message;
             return data.candidates[0].content.parts[0].text;
         } catch (error) {
-            console.error("Error de red:", error);
-            return "❌ Ocurrió un error de conexión al consultar Gemini.";
+            return "❌ Error de conexión con la IA.";
         }
     }
 
@@ -314,21 +272,10 @@
         if (!task) return;
 
         let btn = document.getElementById(`btn-task-${id}`);
-        if (btn) {
-            btn.disabled = true;
-            btn.innerText = "⏳ Consultando a Gemini en vivo...";
-        }
+        btn.disabled = true;
+        btn.innerText = "⏳ Pensando...";
 
-        let prompt = `Eres un tutor académico experto.
-Analiza y explica el tema especificado en este título de tarea: "${task.title}".
-Detalles adicionales dados por el estudiante: "${task.desc}".
-
-Instrucciones:
-1. Explica de forma clara y profunda qué es el tema.
-2. Detalla los puntos clave más importantes.
-3. Brinda recomendaciones prácticas sobre cómo realizar el trabajo o estudio.`;
-
-        task.guideText = await askGemini(prompt);
+        task.guideText = await askGemini(`Explica brevemente este tema de tarea: ${task.title}. Detalles: ${task.desc}`);
         localStorage.setItem('userTasks', JSON.stringify(savedTasks));
         renderAll();
     }
@@ -338,233 +285,57 @@ Instrucciones:
         if (!exam) return;
 
         let btn = document.getElementById(`btn-exam-${id}`);
-        if (btn) {
-            btn.disabled = true;
-            btn.innerText = "⏳ Generando contenido con Gemini...";
-        }
+        btn.disabled = true;
+        btn.innerText = "⏳ Generando...";
 
-        let topic = exam.topics || exam.title;
-        let prompt = "";
-
-        if (exam.type === "Exposición Oral") {
-            prompt = `Eres un tutor de oratoria académica.
-El estudiante tiene una exposición sobre: "${topic}" (Título: "${exam.title}").
-
-Instrucciones:
-1. Redacta un guión completo y hablado (Saludo, Introducción conceptual al tema, Puntos clave y Conclusión).
-2. Incluye 2 consejos de presentación.`;
-        } else {
-            prompt = `Eres un tutor de preparación para exámenes.
-El estudiante evaluará el tema: "${topic}" (Título: "${exam.title}").
-
-Instrucciones:
-1. Genera una guía de estudio conceptual y explicativa a fondo.
-2. Resume los datos o elementos clave a memorizar.
-3. Incluye 2 preguntas probables de examen con sus respuestas explicadas.`;
-        }
-
-        exam.studyText = await askGemini(prompt);
+        exam.studyText = await askGemini(`Genera una guía de estudio rápida para un ${exam.type} sobre: ${exam.topics || exam.title}`);
         localStorage.setItem('userExams', JSON.stringify(savedExams));
         renderAll();
     }
 
-    // Control de pestañas
-    function showTab(tabName, btnElement) {
-        var sections = document.querySelectorAll('.tab-section');
-        sections.forEach(function(sec) {
-            sec.classList.remove('active');
-            sec.style.display = 'none';
-        });
-
-        var buttons = document.querySelectorAll('.menu-btn');
-        buttons.forEach(function(btn) {
-            btn.classList.remove('active');
-        });
-
-        var target = document.getElementById('tab-' + tabName);
-        if (target) {
-            target.classList.add('active');
-            target.style.display = 'block';
-        }
-
-        if (btnElement) {
-            btnElement.classList.add('active');
-        }
-    }
-
-    var savedTasks = JSON.parse(localStorage.getItem('userTasks')) || [];
-    var savedExams = JSON.parse(localStorage.getItem('userExams')) || [];
-
-    function requestNotificationPermission() {
-        var status = document.getElementById('notifStatus');
-        if ("Notification" in window) {
-            Notification.requestPermission().then(function(permission) {
-                if (permission === "granted") {
-                    status.innerText = "¡Notificaciones activadas correctamente!";
-                } else {
-                    status.innerText = "Permiso de notificaciones denegado.";
-                }
-            });
-        } else {
-            status.innerText = "Este navegador no soporta notificaciones.";
-        }
-    }
-
-    function addNewTask() {
-        var title = document.getElementById('taskTitle').value.trim();
-        var desc = document.getElementById('taskDesc').value.trim();
-        var date = document.getElementById('taskDate').value;
-
-        if (!title) {
-            alert('Por favor ingresa el título de la tarea.');
-            return;
-        }
-
-        savedTasks.push({
-            id: Date.now(),
-            title: title,
-            desc: desc || "Sin descripción adicional",
-            date: date || "Sin fecha asignada",
-            completed: false,
-            guideText: null
-        });
-
-        localStorage.setItem('userTasks', JSON.stringify(savedTasks));
-        document.getElementById('taskTitle').value = '';
-        document.getElementById('taskDesc').value = '';
-        document.getElementById('taskDate').value = '';
-        renderAll();
-    }
-
-    function toggleTask(id) {
-        for (var i = 0; i < savedTasks.length; i++) {
-            if (savedTasks[i].id === id) {
-                savedTasks[i].completed = !savedTasks[i].completed;
-            }
-        }
-        localStorage.setItem('userTasks', JSON.stringify(savedTasks));
-        renderAll();
-    }
-
-    function addNewExam() {
-        var title = document.getElementById('examTitleInput').value.trim();
-        var type = document.getElementById('examType').value;
-        var date = document.getElementById('examDate').value;
-        var topics = document.getElementById('examTopics').value.trim();
-
-        if (!title) {
-            alert('Por favor ingresa el título de la evaluación.');
-            return;
-        }
-
-        savedExams.push({
-            id: Date.now(),
-            title: title,
-            type: type,
-            date: date || "Sin fecha asignada",
-            topics: topics || title,
-            studyText: null
-        });
-
-        localStorage.setItem('userExams', JSON.stringify(savedExams));
-        document.getElementById('examTitleInput').value = '';
-        document.getElementById('examTopics').value = '';
-        document.getElementById('examDate').value = '';
-        renderAll();
-    }
-
+    // ==========================================
+    // 6. RENDERIZADO EN PANTALLA
+    // ==========================================
     function renderAll() {
-        renderTasks();
-        renderExams();
-        renderHomeSummary();
+        // Renderizar Tareas
+        let taskCont = document.getElementById('taskListContainer');
+        taskCont.innerHTML = savedTasks.map(t => `
+            <div class="item-card ${t.completed ? 'completed' : ''}">
+                <div class="item-header">
+                    <strong>${t.title}</strong>
+                    <button class="task-btn" onclick="toggleTask(${t.id})">${t.completed ? 'Deshacer' : 'Completar (+5 🪙)'}</button>
+                </div>
+                <p style="font-size: 0.85rem;">${t.desc}</p>
+                <small>📅 Entrega: ${t.date}</small><br>
+                <button id="btn-task-${t.id}" class="btn-ai" onclick="generateTaskGuide(${t.id})">🤖 Ayuda de IA</button>
+                ${t.guideText ? `<div class="ai-guide-box">${t.guideText}</div>` : ''}
+            </div>
+        `).join('') || '<p>No hay tareas.</p>';
+
+        // Renderizar Exámenes
+        let examCont = document.getElementById('examListContainer');
+        examCont.innerHTML = savedExams.map(e => `
+            <div class="item-card exam-type">
+                <div class="item-header"><strong>[${e.type}] ${e.title}</strong></div>
+                <p style="font-size: 0.85rem;">Temas: ${e.topics}</p>
+                <small style="color: red;">📅 Fecha: ${e.date}</small><br>
+                <button id="btn-exam-${e.id}" class="btn-ai" onclick="generateExamStudy(${e.id})">🤖 Generar Guía</button>
+                ${e.studyText ? `<div class="ai-guide-box">${e.studyText}</div>` : ''}
+            </div>
+        `).join('') || '<p>No hay exámenes.</p>';
+
+        // Resumen Inicio
+        let homeTask = document.getElementById('homeTaskList');
+        let pending = savedTasks.filter(t => !t.completed);
+        homeTask.innerHTML = pending.map(t => `<div><strong>${t.title}</strong> - <small>${t.date}</small></div>`).join('') || '<p>Todo al día 🎉</p>';
     }
 
-    function renderTasks() {
-        var container = document.getElementById('taskListContainer');
-        if (!container) return;
+    // Inicializar todo al cargar
+    window.onload = () => {
+        checkRacha();
+        renderAll();
+    };
+</script>
 
-        if (savedTasks.length === 0) {
-            container.innerHTML = '<p style="color: #9ca3af;">No tienes tareas registradas.</p>';
-            return;
-        }
-
-        container.innerHTML = '';
-        for (var i = 0; i < savedTasks.length; i++) {
-            var task = savedTasks[i];
-            var div = document.createElement('div');
-            div.className = 'item-card';
-            
-            var guideHTML = task.guideText ? '<div class="ai-guide-box">' + task.guideText + '</div>' : '';
-
-            div.innerHTML = 
-                '<div class="item-header">' +
-                    '<strong>' + task.title + '</strong>' +
-                    '<button class="task-btn" onclick="toggleTask(' + task.id + ')">' + (task.completed ? '✓ Completada' : 'Marcar Lista') + '</button>' +
-                '</div>' +
-                '<p style="font-size: 0.85rem; color: #4b5563; margin-bottom: 6px;">' + task.desc + '</p>' +
-                '<small style="color: #6b7280;">📅 Entrega: ' + task.date + '</small><br>' +
-                '<button id="btn-task-' + task.id + '" class="btn-ai" onclick="generateTaskGuide(' + task.id + ')">🤖 Explicar Tema (Gemini en vivo)</button>' +
-                guideHTML;
-
-            container.appendChild(div);
-        }
-    }
-
-    function renderExams() {
-        var container = document.getElementById('examListContainer');
-        if (!container) return;
-
-        if (savedExams.length === 0) {
-            container.innerHTML = '<p style="color: #9ca3af;">No tienes evaluaciones programadas.</p>';
-            return;
-        }
-
-        container.innerHTML = '';
-        for (var i = 0; i < savedExams.length; i++) {
-            var exam = savedExams[i];
-            var div = document.createElement('div');
-            div.className = 'item-card exam-type';
-
-            var studyHTML = exam.studyText ? '<div class="ai-guide-box">' + exam.studyText + '</div>' : '';
-
-            div.innerHTML = 
-                '<div class="item-header">' +
-                    '<strong>[' + exam.type + '] ' + exam.title + '</strong>' +
-                    '<span class="badge">Evaluación</span>' +
-                '</div>' +
-                '<p style="font-size: 0.85rem; color: #4b5563; margin-bottom: 6px;">Temas: ' + exam.topics + '</p>' +
-                '<small style="color: #ef4444; font-weight: bold;">📅 Fecha: ' + exam.date + '</small><br>' +
-                '<button id="btn-exam-' + exam.id + '" class="btn-ai" onclick="generateExamStudy(' + exam.id + ')">🤖 ' + (exam.type === "Exposición Oral" ? "Generar Guión Oral" : "Explicar Tema del Examen") + '</button>' +
-                studyHTML;
-
-            container.appendChild(div);
-        }
-    }
-
-    function renderHomeSummary() {
-        var homeTaskList = document.getElementById('homeTaskList');
-        var homeExamList = document.getElementById('homeExamList');
-
-        if (homeTaskList) {
-            var pendingTasks = savedTasks.filter(function(t) { return !t.completed; });
-            if (pendingTasks.length === 0) {
-                homeTaskList.innerHTML = '<p style="color: #9ca3af;">¡Al día! No tienes tareas pendientes.</p>';
-            } else {
-                homeTaskList.innerHTML = '';
-                for (var i = 0; i < pendingTasks.length; i++) {
-                    var t = pendingTasks[i];
-                    homeTaskList.innerHTML += '<div style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">' +
-                        '<strong>' + t.title + '</strong> - <small style="color: #4f46e5;">📅 ' + t.date + '</small>' +
-                    '</div>';
-                }
-            }
-        }
-
-        if (homeExamList) {
-            if (savedExams.length === 0) {
-                homeExamList.innerHTML = '<p style="color: #9ca3af;">No tienes exámenes pendientes.</p>';
-            } else {
-                homeExamList.innerHTML = '';
-                for (var j = 0; j < savedExams.length; j++) {
-                    var e = savedExams[j];
-                    homeExamList.innerHTML += '<div style="padding: 8px 0; border-bottom: 1px solid #e2e8f0
+</body>
+</html>
