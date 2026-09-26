@@ -1,228 +1,352 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AulaOrganizada - IA para Estudiantes</title>
-  <!-- Tailwind CSS (Gratis vÌa CDN) -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Iconos Lucide (Gratis) -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AulaOrganizada - IA Educativa</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+        }
+
+        .layout {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        @media (min-width: 768px) {
+            .layout {
+                flex-direction: row;
+            }
+            .sidebar {
+                width: 260px;
+                min-height: 100vh;
+            }
+            .content {
+                flex: 1;
+            }
+        }
+
+        .sidebar {
+            background-color: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            padding: 20px;
+        }
+
+        .sidebar h2 {
+            font-size: 1.4rem;
+            color: #4f46e5;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .streak-card {
+            background: linear-gradient(135deg, #ff9d00, #ff5500);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(255, 123, 0, 0.2);
+        }
+
+        .streak-card .streak-count {
+            font-size: 1.8rem;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .menu-item {
+            display: block;
+            padding: 12px;
+            color: #4b5563;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .menu-item.active, .menu-item:hover {
+            background-color: #eef2ff;
+            color: #4f46e5;
+        }
+
+        .content {
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+        }
+
+        .card h3 {
+            margin-bottom: 15px;
+            color: #1f2937;
+        }
+
+        .question-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .question-box p {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #111827;
+        }
+
+        .option-label {
+            display: block;
+            margin: 6px 0;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
+
+        .result-box {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .result-pass {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .result-fail {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        input[type="file"] {
+            margin-bottom: 12px;
+            padding: 10px;
+            width: 100%;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 flex h-screen overflow-hidden font-sans">
+<body>
 
-  <!-- Men˙ Lateral -->
-  <aside class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between p-4">
-    <div>
-      <div class="flex items-center gap-2 mb-8 px-2">
-        <i data-lucide="book-open-check" class="text-indigo-600 w-8 h-8"></i>
-        <h1 class="text-xl font-bold text-slate-900">AulaOrganizada</h1>
-      </div>
-
-      <!-- NavegaciÛn -->
-      <nav class="space-y-1">
-        <p class="px-3 text-xs font-semibold text-slate-400 uppercase mb-2">P·gina Actual</p>
-        <button onclick="showTab('inicio')" id="btn-inicio" class="nav-btn flex items-center w-full px-3 py-2 text-sm font-medium rounded-lg text-indigo-600 bg-indigo-50">
-          <i data-lucide="home" class="w-4 h-4 mr-3"></i> Inicio
-        </button>
-        <button onclick="showTab('calendario')" id="btn-calendario" class="nav-btn flex items-center w-full px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100">
-          <i data-lucide="calendar" class="w-4 h-4 mr-3"></i> Calendario
-        </button>
-        <button onclick="showTab('tareas')" id="btn-tareas" class="nav-btn flex items-center w-full px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100">
-          <i data-lucide="check-square" class="w-4 h-4 mr-3"></i> Tareas
-        </button>
-
-        <p class="px-3 text-xs font-semibold text-slate-400 uppercase mt-6 mb-2">MÛdulo Nuevo de IA</p>
-        <button onclick="showTab('ia-modulo')" id="btn-ia-modulo" class="nav-btn flex items-center w-full px-3 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100">
-          <i data-lucide="bot" class="w-4 h-4 mr-3"></i> Asistente & Ex·menes IA
-        </button>
-      </nav>
-    </div>
-
-    <!-- Contador de Racha -->
-    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
-      <div class="bg-amber-500 text-white p-2 rounded-lg">
-        <i data-lucide="flame" class="w-6 h-6"></i>
-      </div>
-      <div>
-        <p class="text-xs text-amber-700 font-medium">Racha de estudio</p>
-        <p class="text-lg font-bold text-amber-900" id="streak-count">?? 5 DÌas Seguidos</p>
-      </div>
-    </div>
-  </aside>
-
-  <!-- Contenido de la AplicaciÛn Web -->
-  <main class="flex-1 overflow-y-auto p-8">
-    
-    <!-- Inicio -->
-    <section id="tab-inicio" class="tab-content">
-      <h2 class="text-2xl font-bold mb-4">Bienvenido a AulaOrganizada</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-          <h3 class="text-slate-500 text-sm font-medium">PrÛximas Entregas</h3>
-          <p class="text-3xl font-bold mt-2">3 Tareas</p>
-        </div>
-        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-          <h3 class="text-slate-500 text-sm font-medium">Ex·menes esta semana</h3>
-          <p class="text-3xl font-bold mt-2">1 Programado</p>
-        </div>
-        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-          <h3 class="text-slate-500 text-sm font-medium">Rendimiento con IA</h3>
-          <p class="text-3xl font-bold mt-2 text-indigo-600">88%</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Calendario -->
-    <section id="tab-calendario" class="tab-content hidden">
-      <h2 class="text-2xl font-bold mb-4">?? Calendario de Entregas</h2>
-      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-        <ul class="divide-y divide-slate-100">
-          <li class="py-3 flex justify-between items-center">
-            <div>
-              <p class="font-semibold text-slate-800">Ensayo de Historia</p>
-              <p class="text-xs text-slate-500">Detectado autom·ticamente por IA</p>
-            </div>
-            <span class="bg-red-100 text-red-700 text-xs px-2.5 py-1 rounded-full font-medium">MaÒana, 23:59</span>
-          </li>
-          <li class="py-3 flex justify-between items-center">
-            <div>
-              <p class="font-semibold text-slate-800">Taller de Matem·ticas</p>
-              <p class="text-xs text-slate-500">GuÌa de ejercicios</p>
-            </div>
-            <span class="bg-amber-100 text-amber-700 text-xs px-2.5 py-1 rounded-full font-medium">PrÛximo viernes</span>
-          </li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- Tareas -->
-    <section id="tab-tareas" class="tab-content hidden">
-      <h2 class="text-2xl font-bold mb-4">?? Mis Tareas</h2>
-      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
-        <label class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
-          <input type="checkbox" class="w-5 h-5 text-indigo-600 rounded">
-          <span class="text-slate-700">Resolver guÌa de QuÌmica Org·nica</span>
-        </label>
-        <label class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg cursor-pointer">
-          <input type="checkbox" class="w-5 h-5 text-indigo-600 rounded">
-          <span class="text-slate-700">Subir resumen del libro de Lectura</span>
-        </label>
-      </div>
-    </section>
-
-    <!-- MÛdulo de IA -->
-    <section id="tab-ia-modulo" class="tab-content hidden space-y-6">
-      <div>
-        <h2 class="text-2xl font-bold text-slate-900">MÛdulo de Inteligencia Artificial</h2>
-        <p class="text-slate-500 text-sm">Sube tus archivos para analizarlos, detectar fechas y generar ex·menes de pr·ctica.</p>
-      </div>
-
-      <!-- Subir Archivo -->
-      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-        <h3 class="font-semibold mb-3 flex items-center gap-2">
-          <i data-lucide="file-up" class="w-5 h-5 text-indigo-600"></i> ?? Subir archivo
-        </h3>
+<div class="layout">
+    <div class="sidebar">
+        <h2>üìö AulaOrganizada</h2>
         
-        <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center bg-slate-50 hover:bg-slate-100 transition">
-          <i data-lucide="upload-cloud" class="w-10 h-10 text-slate-400 mx-auto mb-2"></i>
-          <p class="text-sm font-medium text-slate-700">Arrastra tu examen/tarea aquÌ</p>
-          <p class="text-xs text-slate-400 mt-1">Formatos soportados: PDF, PNG, JPG, DOCX</p>
-          <input type="file" id="fileInput" class="hidden" onchange="handleFileUpload(event)">
-          <button onclick="document.getElementById('fileInput').click()" class="mt-4 bg-indigo-600 text-white px-4 py-2 text-sm font-medium rounded-lg hover:bg-indigo-700">
-            Seleccionar Archivo
-          </button>
+        <div class="streak-card">
+            üî• Racha de Estudio
+            <span class="streak-count" id="streakDisplay">0 D√≠as</span>
         </div>
 
-        <div id="ai-processing" class="hidden mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-lg flex items-center gap-3">
-          <i data-lucide="loader" class="w-5 h-5 text-indigo-600 animate-spin"></i>
-          <span class="text-sm text-indigo-900 font-medium">?? Analizando tarea y ?? detectando fecha lÌmite...</span>
+        <a href="#" class="menu-item active">üè† Inicio</a>
+        <a href="#" class="menu-item">üìù Tareas</a>
+        <a href="#" class="menu-item">ü§ñ Ex√°menes e IA</a>
+    </div>
+
+    <div class="content">
+        <h1>Centro de Estudio e Inteligencia Artificial</h1>
+        <p style="color: #6b7280; margin-bottom: 20px;">Sube tu material de estudio para generar evaluaciones personalizadas.</p>
+
+        <div class="card">
+            <h3>1. Cargar Documento de Estudio</h3>
+            <input type="file" id="fileInput" accept=".txt">
+            <button class="btn-primary" onclick="generateExam()">Generar Examen de 10 Preguntas</button>
         </div>
 
-        <div id="ai-results" class="hidden mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-bold text-emerald-800 uppercase">An·lisis Exitoso</span>
-            <span class="bg-emerald-200 text-emerald-800 text-xs px-2 py-0.5 rounded font-semibold">?? Fecha: 30 de Septiembre</span>
-          </div>
-          <p class="text-sm text-emerald-900"><strong>Tema analizado:</strong> Leyes de Newton y FÌsica B·sica.</p>
+        <div class="card" id="examContainer" style="display: none;">
+            <h3 id="examTitle">Examen Generado por IA</h3>
+            <form id="quizForm">
+                <div id="questionsList"></div>
+                <button type="button" class="btn-primary" onclick="evaluateExam()" style="margin-top: 15px;">Enviar y Calificar Examen</button>
+            </form>
+
+            <div id="resultBox" class="result-box">
+                <h2 id="scoreText">Nota: 0.0 / 5.0</h2>
+                <p id="feedbackText"></p>
+            </div>
         </div>
-      </div>
+    </div>
+</div>
 
-      <!-- Generar Examen / Corregir -->
-      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="font-semibold flex items-center gap-2">
-            <i data-lucide="sparkles" class="w-5 h-5 text-indigo-600"></i> ?? Generar Examen
-          </h3>
-          <button onclick="generateExam()" class="bg-slate-900 text-white text-xs px-3 py-2 rounded-lg hover:bg-slate-800 flex items-center gap-1">
-            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Nuevas Preguntas
-          </button>
-        </div>
+<script>
+    // Manejo de la racha
+    let streak = parseInt(localStorage.getItem('userStreak')) || 0;
+    let lastExamDate = localStorage.getItem('lastExamDate') || "";
 
-        <form id="quiz-form" class="space-y-4">
-          <div class="p-4 border border-slate-200 rounded-lg">
-            <p class="font-medium text-sm text-slate-800 mb-2">1. øQuÈ establece la Primera Ley de Newton?</p>
-            <label class="block text-sm text-slate-600 mb-1 cursor-pointer">
-              <input type="radio" name="p1" value="correct" class="mr-2"> Ley de Inercia (Un cuerpo permanece en reposo o movimiento a menos que act˙e una fuerza).
-            </label>
-            <label class="block text-sm text-slate-600 cursor-pointer">
-              <input type="radio" name="p1" value="wrong" class="mr-2"> Fuerza es igual a masa por aceleraciÛn.
-            </label>
-          </div>
-
-          <button type="button" onclick="gradeExam()" class="w-full bg-indigo-600 text-white py-2 text-sm font-semibold rounded-lg hover:bg-indigo-700">
-            ?? Corregir Respuestas con IA
-          </button>
-        </form>
-
-        <div id="quiz-result" class="hidden mt-4 p-4 bg-slate-100 rounded-lg text-center">
-          <h4 class="text-xs uppercase text-slate-500 font-bold mb-1">?? Resultado</h4>
-          <p class="text-2xl font-extrabold text-slate-900">100% Correcto</p>
-          <p class="text-xs text-slate-600 mt-1">°Aumentaste tu ?? Racha de estudio a 6 dÌas!</p>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <script>
-    // Inicializar Iconos
-    lucide.createIcons();
-
-    // NavegaciÛn entre pestaÒas
-    function showTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('bg-indigo-50', 'text-indigo-600');
-        btn.classList.add('text-slate-600');
-      });
-
-      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-      const activeBtn = document.getElementById(`btn-${tabId}`);
-      activeBtn.classList.add('bg-indigo-50', 'text-indigo-600');
-      activeBtn.classList.remove('text-slate-600');
+    function updateStreakDisplay() {
+        document.getElementById('streakDisplay').innerText = `${streak} ${streak === 1 ? 'D√≠a' : 'D√≠as'}`;
     }
 
-    // Funciones de simulaciÛn de IA
-    function handleFileUpload(event) {
-      if (!event.target.files[0]) return;
-      document.getElementById('ai-processing').classList.remove('hidden');
-      document.getElementById('ai-results').classList.add('hidden');
+    updateStreakDisplay();
 
-      setTimeout(() => {
-        document.getElementById('ai-processing').classList.add('hidden');
-        document.getElementById('ai-results').classList.remove('hidden');
-      }, 2000);
-    }
+    let currentQuestions = [];
 
     function generateExam() {
-      alert("?? La IA est· generando un nuevo examen de prueba basado en tus archivos...");
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                buildQuestionsFromText(text, file.name);
+            };
+            reader.readAsText(file, "UTF-8");
+        } else {
+            // Examen general por defecto
+            buildQuestionsFromText("", "Conocimiento General");
+        }
     }
 
-    function gradeExam() {
-      document.getElementById('quiz-result').classList.remove('hidden');
-      document.getElementById('streak-count').innerText = "?? 6 DÌas Seguidos";
+    function buildQuestionsFromText(text, sourceName) {
+        // Generaci√≥n din√°mica de 10 preguntas
+        const cleanText = text.trim();
+        const words = cleanText.split(/\s+/).filter(w => w.length > 4);
+
+        currentQuestions = [];
+
+        for (let i = 1; i <= 10; i++) {
+            let topicWord = words[i * 2] || `Concepto #${i}`;
+            topicWord = topicWord.replace(/[^a-zA-Z√°√©√≠√≥√∫√Å√â√ç√ì√ö√±√ë]/g, "");
+
+            if (text.length > 0) {
+                currentQuestions.push({
+                    q: `Seg√∫n el documento "${sourceName}", ¬øcu√°l es una afirmaci√≥n correcta respecto a "${topicWord}"?`,
+                    options: [
+                        `Es un elemento clave presentado en el texto sobre ${topicWord}.`,
+                        `Es un concepto secundario sin relevancia t√©cnica.`,
+                        `No corresponde al tema tratado en el archivo.`,
+                        `Es una teor√≠a descartada por el autor.`
+                    ],
+                    correct: 0
+                });
+            } else {
+                currentQuestions.push({
+                    q: `Pregunta ${i}: ¬øCu√°l es el procedimiento correcto para mantener un plan de estudio efectivo?`,
+                    options: [
+                        `Estudiar de manera constante todos los d√≠as.`,
+                        `Estudiar √∫nicamente el d√≠a antes del examen.`,
+                        `No repasar los contenidos anteriores.`,
+                        `Memorizar sin comprender el tema.`
+                    ],
+                    correct: 0
+                });
+            }
+        }
+
+        displayExam(sourceName);
     }
-  </script>
+
+    function displayExam(sourceName) {
+        const container = document.getElementById('questionsList');
+        document.getElementById('examTitle').innerText = `Examen sobre: ${sourceName}`;
+        container.innerHTML = "";
+
+        currentQuestions.forEach((item, index) => {
+            const qDiv = document.createElement('div');
+            qDiv.className = 'question-box';
+            
+            let optionsHTML = item.options.map((opt, optIndex) => `
+                <label class="option-label">
+                    <input type="radio" name="q${index}" value="${optIndex}"> ${opt}
+                </label>
+            `).join('');
+
+            qDiv.innerHTML = `<p>${index + 1}. ${item.q}</p>${optionsHTML}`;
+            container.appendChild(qDiv);
+        });
+
+        document.getElementById('examContainer').style.display = 'block';
+        document.getElementById('resultBox').style.display = 'none';
+        window.scrollTo({ top: document.getElementById('examContainer').offsetTop, behavior: 'smooth' });
+    }
+
+    function evaluateExam() {
+        let correctAnswers = 0;
+
+        currentQuestions.forEach((item, index) => {
+            const selected = document.querySelector(`input[name="q${index}"]:checked`);
+            if (selected && parseInt(selected.value) === item.correct) {
+                correctAnswers++;
+            }
+        });
+
+        // Calificaci√≥n escala colombiana 1.0 a 5.0 (Cada pregunta vale 0.4 + base 1.0)
+        let grade = (1.0 + (correctAnswers * 0.4)).toFixed(1);
+        if (grade > 5.0) grade = "5.0";
+
+        const resultBox = document.getElementById('resultBox');
+        const scoreText = document.getElementById('scoreText');
+        const feedbackText = document.getElementById('feedbackText');
+
+        resultBox.style.display = 'block';
+        scoreText.innerText = `Nota Final: ${grade} / 5.0`;
+
+        const today = new Date().toDateString();
+
+        if (grade >= 3.0) {
+            resultBox.className = "result-box result-pass";
+            feedbackText.innerText = `¬°Felicidades! Aprobaste con ${correctAnswers} de 10 respuestas correctas.`;
+
+            // Aumentar racha solo si no ha presentado examen hoy
+            if (lastExamDate !== today) {
+                streak++;
+                lastExamDate = today;
+                localStorage.setItem('userStreak', streak);
+                localStorage.setItem('lastExamDate', today);
+                updateStreakDisplay();
+                feedbackText.innerText += " üî• ¬°Has aumentado tu racha de estudio +1 d√≠a!";
+            }
+        } else {
+            resultBox.className = "result-box result-fail";
+            feedbackText.innerText = `Obtuviste ${correctAnswers} de 10 correctas. Necesitas m√≠nimo 3.0 para aprobar. ¬°Sigue repasando!`;
+        }
+    }
+</script>
+
 </body>
 </html>
