@@ -10,15 +10,6 @@
     <meta http-equiv="Expires" content="0">
 
     <title>AulaOrganizada v3.0 (con Gemini IA en Vivo)</title>
-    
-    <!-- Carga del SDK oficial de Google Generative AI -->
-    <script type="importmap">
-      {
-        "imports": {
-          "@google/genai": "https://esm.run/@google/genai"
-        }
-      }
-    </script>
 
     <style>
         * {
@@ -283,34 +274,42 @@
     </div>
 </div>
 
-<script type="module">
-    import { GoogleGenAI } from "@google/genai";
+<script>
+    // 🔑 PEGA TU CLAVE DE API DENTRO DE LAS COMILLAS (Solo borra 🔑🔑🔑 y pon tu clave)
+    const GEMINI_API_KEY = "🔑🔑🔑";
 
-    // 🔑 REEMPLAZA LAS TRES LLAVES POR TU CLAVE DE API REAL DENTRO DE LAS COMILLAS:
-    const GEMINI_API_KEY = "AQ.Ab8RN6J7jJkg1Nl9MuXG68KjHwTbvYbt0xerwLZy31cibCHA7A"; 
-
-    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
-    // Función que conecta con Gemini en tiempo real
+    // Petición HTTP directa y nativa a Google Gemini API
     async function askGemini(promptText) {
         if (!GEMINI_API_KEY || GEMINI_API_KEY === "AQ.Ab8RN6J7jJkg1Nl9MuXG68KjHwTbvYbt0xerwLZy31cibCHA7A") {
-            return "⚠️ Error: Debes ingresar tu API Key de Gemini para activar las respuestas en vivo.";
+            return "⚠️ Error: Falta configurar tu API Key de Gemini en el código.";
         }
 
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
         try {
-            const response = await ai.models.generateContent({
-                model: "gemini-2.5-flash",
-                contents: promptText,
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: promptText }] }]
+                })
             });
-            return response.text;
+
+            const data = await response.json();
+
+            if (data.error) {
+                console.error("Error de la API:", data.error);
+                return "❌ Error de Gemini: " + (data.error.message || "Clave no válida o problema de conexión.");
+            }
+
+            return data.candidates[0].content.parts[0].text;
         } catch (error) {
-            console.error("Error al consultar Gemini:", error);
-            return "❌ Ocurrió un error al conectar con Gemini. Por favor verifica tu conexión a internet o la API Key.";
+            console.error("Error de red:", error);
+            return "❌ Ocurrió un error de conexión al consultar Gemini.";
         }
     }
 
-    // Funciones globales de asistencia con IA
-    window.generateTaskGuide = async function(id) {
+    async function generateTaskGuide(id) {
         let task = savedTasks.find(t => t.id === id);
         if (!task) return;
 
@@ -321,58 +320,55 @@
         }
 
         let prompt = `Eres un tutor académico experto.
-Analiza y explica en profundidad el tema especificado en este título de tarea: "${task.title}".
+Analiza y explica el tema especificado en este título de tarea: "${task.title}".
 Detalles adicionales dados por el estudiante: "${task.desc}".
 
-Instrucciones estrictas:
-1. Identifica claramente de qué trata el tema y da una explicación conceptual directa, objetiva y detallada sobre qué es. NO uses comodines, plantillas preescritas ni selecciones de opciones prefijadas.
-2. Detalla los puntos clave, eventos, fases o componentes esenciales que el estudiante debe conocer sobre este tema.
-3. Brinda una recomendación clara sobre cómo enfocar la consulta o tarea.`;
+Instrucciones:
+1. Explica de forma clara y profunda qué es el tema.
+2. Detalla los puntos clave más importantes.
+3. Brinda recomendaciones prácticas sobre cómo realizar el trabajo o estudio.`;
 
         task.guideText = await askGemini(prompt);
         localStorage.setItem('userTasks', JSON.stringify(savedTasks));
         renderAll();
-    };
+    }
 
-    window.generateExamStudy = async function(id) {
+    async function generateExamStudy(id) {
         let exam = savedExams.find(e => e.id === id);
         if (!exam) return;
 
         let btn = document.getElementById(`btn-exam-${id}`);
         if (btn) {
             btn.disabled = true;
-            btn.innerText = "⏳ Generando contenido con Gemini en vivo...";
+            btn.innerText = "⏳ Generando contenido con Gemini...";
         }
 
         let topic = exam.topics || exam.title;
         let prompt = "";
 
         if (exam.type === "Exposición Oral") {
-            prompt = `Eres un tutor de oratoria y contenido académico.
+            prompt = `Eres un tutor de oratoria académica.
 El estudiante tiene una exposición sobre: "${topic}" (Título: "${exam.title}").
 
-Instrucciones estrictas:
-1. Detecta cuál es el tema real expuesto y redacta un guión hablado literal y fluido para la exposición (Saludo, Introducción conceptual al tema real, Desarrollo de puntos principales y Conclusión).
-2. NO uses comodines ni estructuras fijas vacías. El guión debe tratar explícitamente y de fondo sobre "${topic}".
-3. Añade 2 consejos prácticos de presentación al final.`;
+Instrucciones:
+1. Redacta un guión completo y hablado (Saludo, Introducción conceptual al tema, Puntos clave y Conclusión).
+2. Incluye 2 consejos de presentación.`;
         } else {
-            prompt = `Eres un tutor académico de preparación de exámenes.
-El estudiante evaluará el tema: "${topic}" (Título de la evaluación: "${exam.title}").
+            prompt = `Eres un tutor de preparación para exámenes.
+El estudiante evaluará el tema: "${topic}" (Título: "${exam.title}").
 
-Instrucciones estrictas:
-1. Identifica el tema específico y genera una guía de estudio conceptual y detallada que explique a fondo los conceptos centrales que debe estudiar.
-2. Resume los datos, fórmulas, causas o elementos claves a memorizar y repasar.
+Instrucciones:
+1. Genera una guía de estudio conceptual y explicativa a fondo.
+2. Resume los datos o elementos clave a memorizar.
 3. Incluye 2 preguntas probables de examen con sus respuestas explicadas.`;
         }
 
         exam.studyText = await askGemini(prompt);
         localStorage.setItem('userExams', JSON.stringify(savedExams));
         renderAll();
-    };
-</script>
+    }
 
-<script>
-    // Control de navegación entre pestañas
+    // Control de pestañas
     function showTab(tabName, btnElement) {
         var sections = document.querySelectorAll('.tab-section');
         sections.forEach(function(sec) {
@@ -558,4 +554,17 @@ Instrucciones estrictas:
                 for (var i = 0; i < pendingTasks.length; i++) {
                     var t = pendingTasks[i];
                     homeTaskList.innerHTML += '<div style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">' +
-                        '<strong>' + t.title + '
+                        '<strong>' + t.title + '</strong> - <small style="color: #4f46e5;">📅 ' + t.date + '</small>' +
+                    '</div>';
+                }
+            }
+        }
+
+        if (homeExamList) {
+            if (savedExams.length === 0) {
+                homeExamList.innerHTML = '<p style="color: #9ca3af;">No tienes exámenes pendientes.</p>';
+            } else {
+                homeExamList.innerHTML = '';
+                for (var j = 0; j < savedExams.length; j++) {
+                    var e = savedExams[j];
+                    homeExamList.innerHTML += '<div style="padding: 8px 0; border-bottom: 1px solid #e2e8f0
