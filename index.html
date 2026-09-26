@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AulaOrganizada - IA Educativa</title>
+    <title>AulaOrganizada - IA Educativa v1.3</title>
     <!-- Librerías de lectura externa -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
@@ -99,13 +99,8 @@
             width: 100%;
         }
 
-        .tab-section {
-            display: none;
-        }
-
-        .tab-section.active {
-            display: block;
-        }
+        .tab-section { display: none; }
+        .tab-section.active { display: block; }
 
         .card {
             background: white;
@@ -120,7 +115,7 @@
             color: #1f2937;
         }
 
-        input[type="text"], textarea {
+        input[type="text"], input[type="date"], select, textarea {
             width: 100%;
             padding: 12px;
             border: 1px solid #cbd5e1;
@@ -129,10 +124,7 @@
             font-size: 1rem;
         }
 
-        textarea {
-            resize: vertical;
-            min-height: 90px;
-        }
+        textarea { resize: vertical; min-height: 90px; }
 
         input[type="file"] {
             margin-bottom: 12px;
@@ -155,14 +147,12 @@
             font-size: 1rem;
         }
 
-        .btn-primary:hover {
-            background-color: #4338ca;
-        }
+        .btn-primary:hover { background-color: #4338ca; }
 
-        .task-item {
+        .item-card {
             background: #f8fafc;
             border-left: 4px solid #4f46e5;
-            padding: 12px 16px;
+            padding: 14px 16px;
             border-radius: 6px;
             margin-bottom: 10px;
             display: flex;
@@ -170,11 +160,7 @@
             align-items: center;
         }
 
-        .task-item.completed {
-            border-left-color: #10b981;
-            opacity: 0.6;
-            text-decoration: line-through;
-        }
+        .item-card.exam-type { border-left-color: #ef4444; }
 
         .task-btn {
             background: #10b981;
@@ -194,18 +180,8 @@
             margin-bottom: 15px;
         }
 
-        .question-box p {
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #111827;
-        }
-
-        .option-label {
-            display: block;
-            margin: 8px 0;
-            cursor: pointer;
-            font-size: 0.95rem;
-        }
+        .question-box p { font-weight: 600; margin-bottom: 10px; color: #111827; }
+        .option-label { display: block; margin: 8px 0; cursor: pointer; font-size: 0.95rem; }
 
         .result-box {
             display: none;
@@ -215,22 +191,17 @@
             margin-top: 15px;
         }
 
-        .result-pass {
-            background-color: #d1fae5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
-        }
+        .result-pass { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .result-fail { background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
 
-        .result-fail {
-            background-color: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fca5a5;
-        }
-
-        #statusMessage {
-            margin-top: 10px;
-            font-weight: bold;
-            color: #4f46e5;
+        .ai-response {
+            background: #eef2ff;
+            border: 1px solid #c7d2fe;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            display: none;
         }
     </style>
 </head>
@@ -253,7 +224,8 @@
 
         <a class="menu-item active" onclick="switchTab('inicio', this)">🏠 Inicio</a>
         <a class="menu-item" onclick="switchTab('tareas', this)">📝 Tareas</a>
-        <a class="menu-item" onclick="switchTab('examenes', this)">🤖 Exámenes e IA</a>
+        <a class="menu-item" onclick="switchTab('examenes', this)">📅 Exámenes</a>
+        <a class="menu-item" onclick="switchTab('ia', this)">🤖 Tutor IA</a>
     </div>
 
     <div class="content">
@@ -261,52 +233,101 @@
         <!-- PESTAÑA 1: INICIO -->
         <div id="tab-inicio" class="tab-section active">
             <h1>Bienvenido a AulaOrganizada</h1>
-            <p style="color: #6b7280; margin-top: 8px; margin-bottom: 20px;">Tu plataforma para gestionar tareas, practicar exámenes y aumentar tu racha de estudio.</p>
+            <p style="color: #6b7280; margin-top: 8px; margin-bottom: 20px;">Plataforma inteligente para gestionar tus compromisos, exámenes y preparar tus estudios.</p>
+
+            <div class="card">
+                <button class="btn-primary" onclick="requestNotificationPermission()">🔔 Activar Notificaciones de Recordatorio</button>
+                <p id="notifStatus" style="font-size: 0.85rem; color: #6b7280; margin-top: 8px; text-align: center;"></p>
+            </div>
             
             <div class="card">
-                <h3>Resumen Educativo</h3>
-                <p>Navega desde el menú para agregar nuevas tareas o presentar tus evaluaciones por Inteligencia Artificial.</p>
+                <h3>Resumen Académico</h3>
+                <p>Usa el menú para agregar tareas sencillas, programar exámenes/exposiciones o consultar a tu Tutor IA.</p>
             </div>
         </div>
 
         <!-- PESTAÑA 2: TAREAS -->
         <div id="tab-tareas" class="tab-section">
             <h1>Gestión de Tareas</h1>
-            <p style="color: #6b7280; margin-bottom: 20px;">Registra tus actividades escribiendo la consulta o adjuntando archivos PDF/DOCX.</p>
+            <p style="color: #6b7280; margin-bottom: 20px;">Registra compromisos sencillos (consultas, dibujos, ejercicios).</p>
 
             <div class="card">
                 <h3>Añadir Nueva Tarea</h3>
-                <input type="text" id="taskTitle" placeholder="Título o asunto de la tarea...">
-                <textarea id="taskDesc" placeholder="Escribe aquí el contenido o consulta de tu tarea..."></textarea>
+                <input type="text" id="taskTitle" placeholder="Título de la tarea...">
+                <textarea id="taskDesc" placeholder="Escribe el contenido o consulta..."></textarea>
                 
-                <label style="font-size: 0.9rem; color: #4b5563; display: block; margin-bottom: 6px;">Adjuntar archivo (Opcional - .pdf, .docx, .txt):</label>
+                <label style="font-size: 0.85rem; color: #4b5563;">Fecha de entrega:</label>
+                <input type="date" id="taskDate">
+
+                <label style="font-size: 0.85rem; color: #4b5563;">Adjuntar archivo (Opcional):</label>
                 <input type="file" id="taskFile" accept=".pdf, .docx, .txt">
                 
                 <button class="btn-primary" onclick="addNewTask()">Guardar Tarea</button>
             </div>
 
             <div class="card">
-                <h3>Mis Tareas Registradas</h3>
-                <div id="taskListContainer">
-                    <p style="color: #9ca3af;" id="emptyTaskMsg">No tienes tareas guardadas aún.</p>
-                </div>
+                <h3>Mis Tareas Guardadas</h3>
+                <div id="taskListContainer"></div>
             </div>
         </div>
 
-        <!-- PESTAÑA 3: EXÁMENES E IA -->
+        <!-- PESTAÑA 3: EXÁMENES Y ACTIVIDADES AVANZADAS -->
         <div id="tab-examenes" class="tab-section">
-            <h1>Centro de Evaluación e IA</h1>
-            <p style="color: #6b7280; margin-bottom: 20px;">Sube tu material de estudio (.txt, .docx o .pdf) para generar tu prueba rápida.</p>
+            <h1>Exámenes y Evaluaciones</h1>
+            <p style="color: #6b7280; margin-bottom: 20px;">Organiza exámenes, quices, exposiciones y talleres principales.</p>
 
             <div class="card">
-                <h3>1. Cargar Documento de Estudio</h3>
+                <h3>Programar Examen / Evaluación</h3>
+                <input type="text" id="examTitleInput" placeholder="Nombre de la evaluación (Ej: Examen de Historia)...">
+                
+                <select id="examType">
+                    <option value="Examen">Examen Escrito</option>
+                    <option value="Quiz">Quiz Rápido</option>
+                    <option value="Exposición">Exposición Oral</option>
+                    <option value="Taller Principal">Taller / Proyecto</option>
+                </select>
+
+                <label style="font-size: 0.85rem; color: #4b5563;">Fecha del Examen / Evaluación:</label>
+                <input type="date" id="examDate">
+
+                <textarea id="examTopics" placeholder="Temas clave que van a evaluar..."></textarea>
+
+                <button class="btn-primary" onclick="addNewExam()">Programar Evaluación</button>
+            </div>
+
+            <div class="card">
+                <h3>Próximos Exámenes y Evaluaciones</h3>
+                <div id="examListContainer"></div>
+            </div>
+        </div>
+
+        <!-- PESTAÑA 4: TUTOR IA -->
+        <div id="tab-ia" class="tab-section">
+            <h1>Tutor IA de Estudio</h1>
+            <p style="color: #6b7280; margin-bottom: 20px;">Ayudante interactivo para preparar exposiciones, explicar temas o realizar simulación de examen de 10 preguntas.</p>
+
+            <div class="card">
+                <h3>1. Preparar Exposición o Explicación</h3>
+                <input type="text" id="aiTopic" placeholder="Tema sobre el cual necesitas ayuda...">
+                <select id="aiOption">
+                    <option value="exposicion">Generar Guión para Exposición Oral</option>
+                    <option value="explicacion">Explicar Tema Sencillamente</option>
+                </select>
+                <button class="btn-primary" onclick="generateAIHelp()">Generar Ayuda de IA</button>
+
+                <div id="aiResponseBox" class="ai-response"></div>
+            </div>
+
+            <div class="card">
+                <h3>2. Generar Examen Práctico (10 Preguntas)</h3>
+                <p style="font-size: 0.9rem; color: #4b5563; margin-bottom: 12px;">Sube un archivo de estudio (.pdf, .docx, .txt) para practicar:</p>
                 <input type="file" id="fileInput" accept=".txt, .docx, .pdf">
-                <button class="btn-primary" onclick="handleFileUpload()">Generar Examen de 10 Preguntas</button>
-                <div id="statusMessage"></div>
+                <button class="btn-primary" onclick="handleFileUpload()">Iniciar Examen de 10 Preguntas</button>
+                <div id="statusMessage" style="margin-top: 8px; font-weight: bold; color: #4f46e5;"></div>
             </div>
 
             <div class="card" id="examContainer" style="display: none;">
-                <h3 id="examTitle">Examen Generado</h3>
+                <h3 id="examTitle">Examen Práctico</h3>
                 <form id="quizForm">
                     <div id="questionsList"></div>
                     <button type="button" class="btn-primary" onclick="evaluateExam()" style="margin-top: 15px;">Enviar y Calificar Examen</button>
@@ -323,14 +344,13 @@
 </div>
 
 <script>
-    // Configurar Worker de PDF.js para carga rápida de PDFs
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    // Manejo de Estados y Guardado Local
     let streak = parseInt(localStorage.getItem('userStreak')) || 0;
     let coins = parseInt(localStorage.getItem('userCoins')) || 0;
     let lastExamDate = localStorage.getItem('lastExamDate') || "";
     let savedTasks = JSON.parse(localStorage.getItem('userTasks')) || [];
+    let savedExams = JSON.parse(localStorage.getItem('userExams')) || [];
 
     function updateStatsDisplay() {
         document.getElementById('streakDisplay').innerText = `${streak} ${streak === 1 ? 'Día' : 'Días'}`;
@@ -339,8 +359,9 @@
 
     updateStatsDisplay();
     renderTasks();
+    renderExams();
+    checkNotifications();
 
-    // Navegación entre pestañas
     function switchTab(tabName, element) {
         document.querySelectorAll('.tab-section').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
@@ -349,57 +370,84 @@
         element.classList.add('active');
     }
 
-    // Funciones para Gestión de Tareas
+    // Permisos y Gestión de Notificaciones
+    function requestNotificationPermission() {
+        if ("Notification" in window) {
+            Notification.requestPermission().then(permission => {
+                const status = document.getElementById('notifStatus');
+                if (permission === "granted") {
+                    status.innerText = "¡Notificaciones activadas con éxito!";
+                    checkNotifications();
+                } else {
+                    status.innerText = "Permiso de notificaciones denegado.";
+                }
+            });
+        }
+    }
+
+    function checkNotifications() {
+        if ("Notification" in window && Notification.permission === "granted") {
+            const todayStr = new Date().toISOString().split('T')[0];
+            
+            savedTasks.forEach(t => {
+                if (t.date === todayStr && !t.completed) {
+                    new Notification("📌 Recordatorio de Tarea Hoy", { body: t.title });
+                }
+            });
+
+            savedExams.forEach(e => {
+                if (e.date === todayStr) {
+                    new Notification("📅 Recordatorio de Evaluación Hoy", { body: `${e.type}: ${e.title}` });
+                }
+            });
+        }
+    }
+
+    // Manejo de Tareas
     function addNewTask() {
         const title = document.getElementById('taskTitle').value.trim();
         const desc = document.getElementById('taskDesc').value.trim();
+        const date = document.getElementById('taskDate').value;
         const fileInput = document.getElementById('taskFile');
         const file = fileInput.files[0];
 
-        if (!title && !desc) {
-            alert('Por favor ingresa un título o la consulta de tu tarea.');
-            return;
-        }
+        if (!title) return alert('Por favor escribe el título de la tarea.');
 
-        const newTask = {
+        savedTasks.push({
             id: Date.now(),
-            title: title || "Tarea sin título",
+            title,
             desc: desc || "Sin descripción",
+            date: date || "Sin fecha",
             fileName: file ? file.name : null,
             completed: false
-        };
+        });
 
-        savedTasks.push(newTask);
         localStorage.setItem('userTasks', JSON.stringify(savedTasks));
-
         document.getElementById('taskTitle').value = '';
         document.getElementById('taskDesc').value = '';
+        document.getElementById('taskDate').value = '';
         fileInput.value = '';
-
         renderTasks();
     }
 
     function renderTasks() {
         const container = document.getElementById('taskListContainer');
         if (savedTasks.length === 0) {
-            container.innerHTML = '<p style="color: #9ca3af;">No tienes tareas guardadas aún.</p>';
+            container.innerHTML = '<p style="color: #9ca3af;">No tienes tareas guardadas.</p>';
             return;
         }
 
         container.innerHTML = '';
         savedTasks.forEach(task => {
             const div = document.createElement('div');
-            div.className = `task-item ${task.completed ? 'completed' : ''}`;
-            
-            let fileTag = task.fileName ? `<br><small style="color: #6b7280;">📎 Archivo: ${task.fileName}</small>` : '';
-
+            div.className = `item-card ${task.completed ? 'completed' : ''}`;
             div.innerHTML = `
                 <div>
                     <strong>${task.title}</strong>
-                    <p style="font-size: 0.9rem; margin-top: 4px;">${task.desc}</p>
-                    ${fileTag}
+                    <p style="font-size: 0.85rem; color: #4b5563;">${task.desc}</p>
+                    <small style="color: #6b7280;">📅 Fecha: ${task.date} ${task.fileName ? `| 📎 ${task.fileName}` : ''}</small>
                 </div>
-                <button class="task-btn" onclick="toggleTask(${task.id})">${task.completed ? '✓ Lista' : 'Completar'}</button>
+                <button class="task-btn" onclick="toggleTask(${task.id})">${task.completed ? '✓' : 'Listo'}</button>
             `;
             container.appendChild(div);
         });
@@ -411,157 +459,78 @@
         renderTasks();
     }
 
-    // Lógica para Exámenes e IA
+    // Manejo de Exámenes
+    function addNewExam() {
+        const title = document.getElementById('examTitleInput').value.trim();
+        const type = document.getElementById('examType').value;
+        const date = document.getElementById('examDate').value;
+        const topics = document.getElementById('examTopics').value.trim();
+
+        if (!title) return alert('Por favor escribe el nombre de la evaluación.');
+
+        savedExams.push({
+            id: Date.now(),
+            title,
+            type,
+            date: date || "Sin fecha",
+            topics: topics || "Temas generales"
+        });
+
+        localStorage.setItem('userExams', JSON.stringify(savedExams));
+        document.getElementById('examTitleInput').value = '';
+        document.getElementById('examTopics').value = '';
+        document.getElementById('examDate').value = '';
+        renderExams();
+    }
+
+    function renderExams() {
+        const container = document.getElementById('examListContainer');
+        if (savedExams.length === 0) {
+            container.innerHTML = '<p style="color: #9ca3af;">No tienes evaluaciones programadas.</p>';
+            return;
+        }
+
+        container.innerHTML = '';
+        savedExams.forEach(exam => {
+            const div = document.createElement('div');
+            div.className = 'item-card exam-type';
+            div.innerHTML = `
+                <div>
+                    <strong>[${exam.type}] ${exam.title}</strong>
+                    <p style="font-size: 0.85rem; color: #4b5563;">Temas: ${exam.topics}</p>
+                    <small style="color: #ef4444; font-weight: bold;">📅 Fecha: ${exam.date}</small>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // Funciones del Tutor IA
+    function generateAIHelp() {
+        const topic = document.getElementById('aiTopic').value.trim();
+        const option = document.getElementById('aiOption').value;
+        const responseBox = document.getElementById('aiResponseBox');
+
+        if (!topic) return alert('Por favor escribe un tema.');
+
+        responseBox.style.display = 'block';
+
+        if (option === 'exposicion') {
+            responseBox.innerText = `📢 GUIÓN SUGERIDO PARA TU EXPOSICIÓN SOBRE "${topic.toUpperCase()}":\n\n` +
+            `1. INTRODUCCIÓN (Saludio y tema):\n"Buenos días/tardes. Hoy les hablaré sobre ${topic}, un tema clave para comprender..."\n\n` +
+            `2. PUNTOS CLAVE A MENCIONAR:\n- Definición general de ${topic}.\n- Características e importancia principal.\n- Un ejemplo práctico de la vida real.\n\n` +
+            `3. CONCLUSIÓN:\n"En resumen, ${topic} nos enseña que... Muchas gracias por su atención."`;
+        } else {
+            responseBox.innerText = `💡 EXPLICACIÓN SENCILLA SOBRE "${topic.toUpperCase()}":\n\n` +
+            `Imagina que ${topic} es como un sistema ordenado. Su objetivo principal es organizar conceptos clave para que todo funcione bien.\n\n` +
+            `• ¿Qué es?: Es la idea fundamental respecto al área estudiada.\n` +
+            `• ¿Para qué sirve?: Ayuda a resolver problemas y estructurar el conocimiento de forma clara y directa.`;
+        }
+    }
+
+    // Examen de 10 preguntas
     let currentQuestions = [];
 
     async function handleFileUpload() {
         const fileInput = document.getElementById('fileInput');
-        const status = document.getElementById('statusMessage');
-        const file = fileInput.files[0];
-
-        if (!file) {
-            status.innerText = "Procesando examen general de prueba...";
-            buildQuestionsFromText("", "Conocimiento General");
-            return;
-        }
-
-        status.innerText = "Procesando documento rápidamente...";
-        const fileName = file.name.toLowerCase();
-
-        try {
-            if (fileName.endsWith('.docx')) {
-                const arrayBuffer = await file.arrayBuffer();
-                const result = await mammoth.extractRawText({ arrayBuffer });
-                status.innerText = "";
-                buildQuestionsFromText(result.value, file.name);
-            } else if (fileName.endsWith('.pdf')) {
-                const arrayBuffer = await file.arrayBuffer();
-                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                let text = "";
-                for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) {
-                    const page = await pdf.getPage(i);
-                    const content = await page.getTextContent();
-                    text += content.items.map(item => item.str).join(" ") + " ";
-                }
-                status.innerText = "";
-                buildQuestionsFromText(text, file.name);
-            } else {
-                const text = await file.text();
-                status.innerText = "";
-                buildQuestionsFromText(text, file.name);
-            }
-        } catch (err) {
-            status.innerText = "Error al procesar el archivo. Revisa el formato e intentalo de nuevo.";
-        }
-    }
-
-    function buildQuestionsFromText(text, sourceName) {
-        const cleanText = text.trim();
-        const words = cleanText.split(/\s+/).filter(w => w.length > 4);
-
-        currentQuestions = [];
-
-        for (let i = 1; i <= 10; i++) {
-            let topicWord = words[i * 2] || words[i] || `Tema #${i}`;
-            topicWord = topicWord.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, "");
-
-            if (cleanText.length > 0) {
-                currentQuestions.push({
-                    q: `Según el documento "${sourceName}", ¿cuál es un punto relevante sobre "${topicWord}"?`,
-                    options: [
-                        `Es un concepto fundamental tratado en el texto.`,
-                        `Es un detalle secundario sin importancia.`,
-                        `No se relaciona con la lectura.`,
-                        `Es una idea descartada en el documento.`
-                    ],
-                    correct: 0
-                });
-            } else {
-                currentQuestions.push({
-                    q: `Pregunta ${i}: ¿Cuál es una buena práctica de estudio constante?`,
-                    options: [
-                        `Realizar repetición espaciada y exámenes cortos.`,
-                        `Estudiar solo minutos antes del examen.`,
-                        `No tomar apuntes de clase.`,
-                        `Memorizar conceptos sin entenderlos.`
-                    ],
-                    correct: 0
-                });
-            }
-        }
-
-        displayExam(sourceName);
-    }
-
-    function displayExam(sourceName) {
-        const container = document.getElementById('questionsList');
-        document.getElementById('examTitle').innerText = `Examen sobre: ${sourceName}`;
-        container.innerHTML = "";
-
-        currentQuestions.forEach((item, index) => {
-            const qDiv = document.createElement('div');
-            qDiv.className = 'question-box';
-            
-            let optionsHTML = item.options.map((opt, optIndex) => `
-                <label class="option-label">
-                    <input type="radio" name="q${index}" value="${optIndex}"> ${opt}
-                </label>
-            `).join('');
-
-            qDiv.innerHTML = `<p>${index + 1}. ${item.q}</p>${optionsHTML}`;
-            container.appendChild(qDiv);
-        });
-
-        document.getElementById('examContainer').style.display = 'block';
-        document.getElementById('resultBox').style.display = 'none';
-        window.scrollTo({ top: document.getElementById('examContainer').offsetTop, behavior: 'smooth' });
-    }
-
-    function evaluateExam() {
-        let correctAnswers = 0;
-
-        currentQuestions.forEach((item, index) => {
-            const selected = document.querySelector(`input[name="q${index}"]:checked`);
-            if (selected && parseInt(selected.value) === item.correct) {
-                correctAnswers++;
-            }
-        });
-
-        let grade = (1.0 + (correctAnswers * 0.4)).toFixed(1);
-        if (grade > 5.0) grade = "5.0";
-
-        const resultBox = document.getElementById('resultBox');
-        const scoreText = document.getElementById('scoreText');
-        const feedbackText = document.getElementById('feedbackText');
-
-        resultBox.style.display = 'block';
-        scoreText.innerText = `Nota Final: ${grade} / 5.0`;
-
-        const today = new Date().toDateString();
-
-        if (grade >= 3.0) {
-            resultBox.className = "result-box result-pass";
-            coins += 20;
-            localStorage.setItem('userCoins', coins);
-
-            let bonusText = " 🪙 ¡Ganaste +20 monedas!";
-
-            if (lastExamDate !== today) {
-                streak++;
-                lastExamDate = today;
-                localStorage.setItem('userStreak', streak);
-                localStorage.setItem('lastExamDate', today);
-                bonusText += " 🔥 ¡Racha +1 día!";
-            }
-
-            feedbackText.innerText = `¡Aprobado! Lograste ${correctAnswers} de 10 correctas.` + bonusText;
-            updateStatsDisplay();
-        } else {
-            resultBox.className = "result-box result-fail";
-            feedbackText.innerText = `Obtuviste ${correctAnswers} de 10 correctas. Necesitas mínimo 3.0 para aprobar. ¡Sigue practicando!`;
-        }
-    }
-</script>
-
-</body>
-</html>
+        const status = document.getElementById('statusMessa
