@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AulaOrganizada v1.3</title>
-    <!-- Librería para leer archivos Word -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+    <title>AulaOrganizada v1.4</title>
     <style>
         * {
             box-sizing: border-box;
@@ -93,6 +91,7 @@
         .menu-btn.active, .menu-btn:hover {
             background-color: #eef2ff;
             color: #4f46e5;
+            font-weight: bold;
         }
 
         .content {
@@ -103,7 +102,7 @@
         }
 
         .tab-section { display: none; }
-        .tab-section.active { display: block; }
+        .tab-section.active { display: block !important; }
 
         .card {
             background: white;
@@ -207,6 +206,330 @@
             display: none;
         }
     </style>
+    <script>
+        // LÓGICA DE NAVEGACIÓN Y PESTAÑAS (Al inicio para garantizar ejecución)
+        function showTab(tabName, btnElement) {
+            var sections = document.getElementsByClassName('tab-section');
+            for (var i = 0; i < sections.length; i++) {
+                sections[i].style.display = 'none';
+            }
+
+            var buttons = document.getElementsByClassName('menu-btn');
+            for (var j = 0; j < buttons.length; j++) {
+                buttons[j].classList.remove('active');
+            }
+
+            var target = document.getElementById('tab-' + tabName);
+            if (target) {
+                target.style.display = 'block';
+            }
+
+            if (btnElement) {
+                btnElement.classList.add('active');
+            }
+        }
+
+        // Variables de almacenamiento local
+        var streak = parseInt(localStorage.getItem('userStreak')) || 0;
+        var coins = parseInt(localStorage.getItem('userCoins')) || 0;
+        var lastExamDate = localStorage.getItem('lastExamDate') || "";
+        var savedTasks = JSON.parse(localStorage.getItem('userTasks')) || [];
+        var savedExams = JSON.parse(localStorage.getItem('userExams')) || [];
+
+        function updateStatsDisplay() {
+            var streakEl = document.getElementById('streakDisplay');
+            var coinsEl = document.getElementById('coinsDisplay');
+            if (streakEl) streakEl.innerText = streak + (streak === 1 ? ' Día' : ' Días');
+            if (coinsEl) coinsEl.innerText = coins;
+        }
+
+        function requestNotificationPermission() {
+            var status = document.getElementById('notifStatus');
+            if ("Notification" in window) {
+                Notification.requestPermission().then(function(permission) {
+                    if (permission === "granted") {
+                        status.innerText = "¡Notificaciones activadas correctamente!";
+                    } else {
+                        status.innerText = "Permiso de notificaciones denegado.";
+                    }
+                });
+            } else {
+                status.innerText = "Este navegador no soporta notificaciones.";
+            }
+        }
+
+        function addNewTask() {
+            var title = document.getElementById('taskTitle').value.trim();
+            var desc = document.getElementById('taskDesc').value.trim();
+            var date = document.getElementById('taskDate').value;
+            var fileInput = document.getElementById('taskFile');
+            var file = fileInput.files[0];
+
+            if (!title) {
+                alert('Por favor ingresa el título de la tarea.');
+                return;
+            }
+
+            savedTasks.push({
+                id: Date.now(),
+                title: title,
+                desc: desc || "Sin descripción",
+                date: date || "Sin fecha",
+                fileName: file ? file.name : null,
+                completed: false
+            });
+
+            localStorage.setItem('userTasks', JSON.stringify(savedTasks));
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskDesc').value = '';
+            document.getElementById('taskDate').value = '';
+            fileInput.value = '';
+            renderTasks();
+        }
+
+        function renderTasks() {
+            var container = document.getElementById('taskListContainer');
+            if (!container) return;
+
+            if (savedTasks.length === 0) {
+                container.innerHTML = '<p style="color: #9ca3af;">No tienes tareas guardadas.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            for (var i = 0; i < savedTasks.length; i++) {
+                var task = savedTasks[i];
+                var div = document.createElement('div');
+                div.className = 'item-card';
+                div.innerHTML = '<div>' +
+                    '<strong>' + task.title + '</strong>' +
+                    '<p style="font-size: 0.85rem; color: #4b5563;">' + task.desc + '</p>' +
+                    '<small style="color: #6b7280;">📅 Fecha: ' + task.date + (task.fileName ? ' | 📎 ' + task.fileName : '') + '</small>' +
+                    '</div>' +
+                    '<button class="task-btn" onclick="toggleTask(' + task.id + ')">' + (task.completed ? '✓ Listo' : 'Marcar Lista') + '</button>';
+                container.appendChild(div);
+            }
+        }
+
+        function toggleTask(id) {
+            for (var i = 0; i < savedTasks.length; i++) {
+                if (savedTasks[i].id === id) {
+                    savedTasks[i].completed = !savedTasks[i].completed;
+                }
+            }
+            localStorage.setItem('userTasks', JSON.stringify(savedTasks));
+            renderTasks();
+        }
+
+        function addNewExam() {
+            var title = document.getElementById('examTitleInput').value.trim();
+            var type = document.getElementById('examType').value;
+            var date = document.getElementById('examDate').value;
+            var topics = document.getElementById('examTopics').value.trim();
+
+            if (!title) {
+                alert('Por favor ingresa el nombre de la evaluación.');
+                return;
+            }
+
+            savedExams.push({
+                id: Date.now(),
+                title: title,
+                type: type,
+                date: date || "Sin fecha",
+                topics: topics || "Temas generales"
+            });
+
+            localStorage.setItem('userExams', JSON.stringify(savedExams));
+            document.getElementById('examTitleInput').value = '';
+            document.getElementById('examTopics').value = '';
+            document.getElementById('examDate').value = '';
+            renderExams();
+        }
+
+        function renderExams() {
+            var container = document.getElementById('examListContainer');
+            if (!container) return;
+
+            if (savedExams.length === 0) {
+                container.innerHTML = '<p style="color: #9ca3af;">No tienes evaluaciones programadas.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            for (var i = 0; i < savedExams.length; i++) {
+                var exam = savedExams[i];
+                var div = document.createElement('div');
+                div.className = 'item-card exam-type';
+                div.innerHTML = '<div>' +
+                    '<strong>[' + exam.type + '] ' + exam.title + '</strong>' +
+                    '<p style="font-size: 0.85rem; color: #4b5563;">Temas: ' + exam.topics + '</p>' +
+                    '<small style="color: #ef4444; font-weight: bold;">📅 Fecha: ' + exam.date + '</small>' +
+                    '</div>';
+                container.appendChild(div);
+            }
+        }
+
+        function generateAIHelp() {
+            var topic = document.getElementById('aiTopic').value.trim();
+            var option = document.getElementById('aiOption').value;
+            var responseBox = document.getElementById('aiResponseBox');
+
+            if (!topic) {
+                alert('Por favor escribe un tema.');
+                return;
+            }
+
+            responseBox.style.display = 'block';
+
+            if (option === 'exposicion') {
+                responseBox.innerText = '📢 GUIÓN SUGERIDO PARA TU EXPOSICIÓN SOBRE "' + topic.toUpperCase() + '":\n\n' +
+                '1. INTRODUCCIÓN:\n"Buenos días/tardes. Hoy les hablaré sobre ' + topic + '..."\n\n' +
+                '2. PUNTOS CLAVE:\n- Definición general.\n- Importancia y características.\n- Ejemplo de aplicación.\n\n' +
+                '3. CONCLUSIÓN:\n"En resumen, ' + topic + ' es fundamental porque... Gracias por su atención."';
+            } else {
+                responseBox.innerText = '💡 EXPLICACIÓN SENCILLA SOBRE "' + topic.toUpperCase() + '":\n\n' +
+                '• Concepto: Es un punto principal clave para tu materia.\n' +
+                '• Utilidad: Te ayuda a estructurar tus respuestas en exámenes de forma clara y lógica.';
+            }
+        }
+
+        var currentQuestions = [];
+
+        function handleFileUpload() {
+            var fileInput = document.getElementById('fileInput');
+            var status = document.getElementById('statusMessage');
+            var file = fileInput.files[0];
+
+            if (!file) {
+                status.innerText = "Generando examen de prueba general...";
+                buildQuestionsFromText("", "Conocimiento General");
+                return;
+            }
+
+            status.innerText = "Procesando archivo...";
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                status.innerText = "";
+                buildQuestionsFromText(e.target.result, file.name);
+            };
+            reader.readAsText(file, "UTF-8");
+        }
+
+        function buildQuestionsFromText(text, sourceName) {
+            var cleanText = text.trim();
+            var words = cleanText.split(/\s+/).filter(function(w) { return w.length > 4; });
+
+            currentQuestions = [];
+
+            for (var i = 1; i <= 10; i++) {
+                var topicWord = words[i * 2] || words[i] || ("Concepto " + i);
+                topicWord = topicWord.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, "");
+
+                if (cleanText.length > 0) {
+                    currentQuestions.push({
+                        q: 'Según el documento "' + sourceName + '", ¿cuál es un aspecto relevante sobre "' + topicWord + '"?',
+                        options: [
+                            'Es un punto central abordado en el texto.',
+                            'Es un detalle secundario sin importancia.',
+                            'No tiene relación con el tema.',
+                            'Es una teoría totalmente descartada.'
+                        ],
+                        correct: 0
+                    });
+                } else {
+                    currentQuestions.push({
+                        q: 'Pregunta ' + i + ': ¿Cuál es la mejor estrategia para preparar tus exámenes?',
+                        options: [
+                            'Repasar con tiempo y realizar exámenes de práctica.',
+                            'Estudiar solo 5 minutos antes.',
+                            'No tomar apuntes en clase.',
+                            'Memorizar sin entender nada.'
+                        ],
+                        correct: 0
+                    });
+                }
+            }
+
+            displayExam(sourceName);
+        }
+
+        function displayExam(sourceName) {
+            var container = document.getElementById('questionsList');
+            document.getElementById('examTitle').innerText = 'Examen Práctico sobre: ' + sourceName;
+            container.innerHTML = "";
+
+            for (var index = 0; index < currentQuestions.length; index++) {
+                var item = currentQuestions[index];
+                var qDiv = document.createElement('div');
+                qDiv.className = 'question-box';
+
+                var optionsHTML = '';
+                for (var optIndex = 0; optIndex < item.options.length; optIndex++) {
+                    optionsHTML += '<label class="option-label"><input type="radio" name="q' + index + '" value="' + optIndex + '"> ' + item.options[optIndex] + '</label>';
+                }
+
+                qDiv.innerHTML = '<p>' + (index + 1) + '. ' + item.q + '</p>' + optionsHTML;
+                container.appendChild(qDiv);
+            }
+
+            document.getElementById('examContainer').style.display = 'block';
+            document.getElementById('resultBox').style.display = 'none';
+        }
+
+        function evaluateExam() {
+            var correctAnswers = 0;
+
+            for (var index = 0; index < currentQuestions.length; index++) {
+                var selected = document.querySelector('input[name="q' + index + '"]:checked');
+                if (selected && parseInt(selected.value) === currentQuestions[index].correct) {
+                    correctAnswers++;
+                }
+            }
+
+            var grade = (1.0 + (correctAnswers * 0.4)).toFixed(1);
+            if (grade > 5.0) grade = "5.0";
+
+            var resultBox = document.getElementById('resultBox');
+            var scoreText = document.getElementById('scoreText');
+            var feedbackText = document.getElementById('feedbackText');
+
+            resultBox.style.display = 'block';
+            scoreText.innerText = 'Nota Final: ' + grade + ' / 5.0';
+
+            var today = new Date().toDateString();
+
+            if (grade >= 3.0) {
+                resultBox.className = "result-box result-pass";
+                coins += 20;
+                localStorage.setItem('userCoins', coins);
+
+                var bonusText = " 🪙 ¡Ganaste +20 monedas!";
+
+                if (lastExamDate !== today) {
+                    streak++;
+                    lastExamDate = today;
+                    localStorage.setItem('userStreak', streak);
+                    localStorage.setItem('lastExamDate', today);
+                    bonusText += " 🔥 ¡Racha +1 día!";
+                }
+
+                feedbackText.innerText = '¡Felicidades! Aprobaste con ' + correctAnswers + ' de 10 respuestas correctas.' + bonusText;
+                updateStatsDisplay();
+            } else {
+                resultBox.className = "result-box result-fail";
+                feedbackText.innerText = 'Obtuviste ' + correctAnswers + ' de 10 correctas. Necesitas mínimo 3.0 para aprobar. ¡Sigue intentándolo!';
+            }
+        }
+
+        // Carga inicial al abrir la página
+        window.onload = function() {
+            showTab('inicio');
+            updateStatsDisplay();
+            renderTasks();
+            renderExams();
+        };
+    </script>
 </head>
 <body>
 
@@ -228,315 +551,4 @@
         <button class="menu-btn active" onclick="showTab('inicio', this)">🏠 Inicio</button>
         <button class="menu-btn" onclick="showTab('tareas', this)">📝 Tareas</button>
         <button class="menu-btn" onclick="showTab('examenes', this)">📅 Exámenes</button>
-        <button class="menu-btn" onclick="showTab('ia', this)">🤖 Tutor IA</button>
-    </div>
-
-    <div class="content">
-        
-        <!-- PESTAÑA 1: INICIO -->
-        <div id="tab-inicio" class="tab-section active">
-            <h1>Bienvenido a AulaOrganizada</h1>
-            <p style="color: #6b7280; margin-top: 8px; margin-bottom: 20px;">Plataforma inteligente para gestionar tus compromisos, exámenes y preparar tus estudios.</p>
-
-            <div class="card">
-                <button class="btn-primary" onclick="requestNotificationPermission()">🔔 Activar Notificaciones de Recordatorio</button>
-                <p id="notifStatus" style="font-size: 0.85rem; color: #6b7280; margin-top: 8px; text-align: center;"></p>
-            </div>
-            
-            <div class="card">
-                <h3>Resumen Académico</h3>
-                <p>Usa el menú para agregar tareas sencillas, programar exámenes/exposiciones o consultar a tu Tutor IA.</p>
-            </div>
-        </div>
-
-        <!-- PESTAÑA 2: TAREAS -->
-        <div id="tab-tareas" class="tab-section">
-            <h1>Gestión de Tareas</h1>
-            <p style="color: #6b7280; margin-bottom: 20px;">Registra compromisos sencillos (consultas, dibujos, ejercicios).</p>
-
-            <div class="card">
-                <h3>Añadir Nueva Tarea</h3>
-                <input type="text" id="taskTitle" placeholder="Título de la tarea...">
-                <textarea id="taskDesc" placeholder="Escribe el contenido o consulta..."></textarea>
-                
-                <label style="font-size: 0.85rem; color: #4b5563;">Fecha de entrega:</label>
-                <input type="date" id="taskDate">
-
-                <label style="font-size: 0.85rem; color: #4b5563;">Adjuntar archivo (Opcional):</label>
-                <input type="file" id="taskFile" accept=".pdf, .docx, .txt">
-                
-                <button class="btn-primary" onclick="addNewTask()">Guardar Tarea</button>
-            </div>
-
-            <div class="card">
-                <h3>Mis Tareas Guardadas</h3>
-                <div id="taskListContainer"></div>
-            </div>
-        </div>
-
-        <!-- PESTAÑA 3: EXÁMENES Y ACTIVIDADES AVANZADAS -->
-        <div id="tab-examenes" class="tab-section">
-            <h1>Exámenes y Evaluaciones</h1>
-            <p style="color: #6b7280; margin-bottom: 20px;">Organiza exámenes, quices, exposiciones y talleres principales.</p>
-
-            <div class="card">
-                <h3>Programar Examen / Evaluación</h3>
-                <input type="text" id="examTitleInput" placeholder="Nombre de la evaluación...">
-                
-                <select id="examType">
-                    <option value="Examen">Examen Escrito</option>
-                    <option value="Quiz">Quiz Rápido</option>
-                    <option value="Exposición">Exposición Oral</option>
-                    <option value="Taller Principal">Taller / Proyecto</option>
-                </select>
-
-                <label style="font-size: 0.85rem; color: #4b5563;">Fecha del Examen / Evaluación:</label>
-                <input type="date" id="examDate">
-
-                <textarea id="examTopics" placeholder="Temas clave que van a evaluar..."></textarea>
-
-                <button class="btn-primary" onclick="addNewExam()">Programar Evaluación</button>
-            </div>
-
-            <div class="card">
-                <h3>Próximos Exámenes y Evaluaciones</h3>
-                <div id="examListContainer"></div>
-            </div>
-        </div>
-
-        <!-- PESTAÑA 4: TUTOR IA -->
-        <div id="tab-ia" class="tab-section">
-            <h1>Tutor IA de Estudio</h1>
-            <p style="color: #6b7280; margin-bottom: 20px;">Ayudante interactivo para preparar exposiciones, explicar temas o realizar simulación de examen de 10 preguntas.</p>
-
-            <div class="card">
-                <h3>1. Preparar Exposición o Explicación</h3>
-                <input type="text" id="aiTopic" placeholder="Tema sobre el cual necesitas ayuda...">
-                <select id="aiOption">
-                    <option value="exposicion">Generar Guión para Exposición Oral</option>
-                    <option value="explicacion">Explicar Tema Sencillamente</option>
-                </select>
-                <button class="btn-primary" onclick="generateAIHelp()">Generar Ayuda de IA</button>
-
-                <div id="aiResponseBox" class="ai-response"></div>
-            </div>
-
-            <div class="card">
-                <h3>2. Generar Examen Práctico (10 Preguntas)</h3>
-                <p style="font-size: 0.9rem; color: #4b5563; margin-bottom: 12px;">Sube un archivo (.txt o .docx) para practicar:</p>
-                <input type="file" id="fileInput" accept=".txt, .docx">
-                <button class="btn-primary" onclick="handleFileUpload()">Iniciar Examen de 10 Preguntas</button>
-                <div id="statusMessage" style="margin-top: 8px; font-weight: bold; color: #4f46e5;"></div>
-            </div>
-
-            <div class="card" id="examContainer" style="display: none;">
-                <h3 id="examTitle">Examen Práctico</h3>
-                <form id="quizForm">
-                    <div id="questionsList"></div>
-                    <button type="button" class="btn-primary" onclick="evaluateExam()" style="margin-top: 15px;">Enviar y Calificar Examen</button>
-                </form>
-
-                <div id="resultBox" class="result-box">
-                    <h2 id="scoreText">Nota: 0.0 / 5.0</h2>
-                    <p id="feedbackText"></p>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</div>
-
-<script>
-    // Variables globales
-    let streak = parseInt(localStorage.getItem('userStreak')) || 0;
-    let coins = parseInt(localStorage.getItem('userCoins')) || 0;
-    let lastExamDate = localStorage.getItem('lastExamDate') || "";
-    let savedTasks = JSON.parse(localStorage.getItem('userTasks')) || [];
-    let savedExams = JSON.parse(localStorage.getItem('userExams')) || [];
-
-    // Cambiar de Pestañas (Garantizado)
-    function showTab(tabName, btnElement) {
-        let sections = document.querySelectorAll('.tab-section');
-        let buttons = document.querySelectorAll('.menu-btn');
-
-        sections.forEach(sec => sec.classList.remove('active'));
-        buttons.forEach(btn => btn.classList.remove('active'));
-
-        document.getElementById('tab-' + tabName).classList.add('active');
-        if (btnElement) btnElement.classList.add('active');
-    }
-
-    function updateStatsDisplay() {
-        document.getElementById('streakDisplay').innerText = streak + (streak === 1 ? ' Día' : ' Días');
-        document.getElementById('coinsDisplay').innerText = coins;
-    }
-
-    updateStatsDisplay();
-    renderTasks();
-    renderExams();
-
-    // Activar Notificaciones
-    function requestNotificationPermission() {
-        var status = document.getElementById('notifStatus');
-        if ("Notification" in window) {
-            Notification.requestPermission().then(function(permission) {
-                if (permission === "granted") {
-                    status.innerText = "¡Notificaciones activadas correctamente!";
-                } else {
-                    status.innerText = "Permiso de notificaciones denegado.";
-                }
-            });
-        } else {
-            status.innerText = "Este navegador no soporta notificaciones.";
-        }
-    }
-
-    // Tareas
-    function addNewTask() {
-        var title = document.getElementById('taskTitle').value.trim();
-        var desc = document.getElementById('taskDesc').value.trim();
-        var date = document.getElementById('taskDate').value;
-        var fileInput = document.getElementById('taskFile');
-        var file = fileInput.files[0];
-
-        if (!title) return alert('Ingresa el título de la tarea.');
-
-        savedTasks.push({
-            id: Date.now(),
-            title: title,
-            desc: desc || "Sin descripción",
-            date: date || "Sin fecha",
-            fileName: file ? file.name : null,
-            completed: false
-        });
-
-        localStorage.setItem('userTasks', JSON.stringify(savedTasks));
-        document.getElementById('taskTitle').value = '';
-        document.getElementById('taskDesc').value = '';
-        document.getElementById('taskDate').value = '';
-        fileInput.value = '';
-        renderTasks();
-    }
-
-    function renderTasks() {
-        var container = document.getElementById('taskListContainer');
-        if (savedTasks.length === 0) {
-            container.innerHTML = '<p style="color: #9ca3af;">No tienes tareas guardadas.</p>';
-            return;
-        }
-
-        container.innerHTML = '';
-        savedTasks.forEach(function(task) {
-            var div = document.createElement('div');
-            div.className = 'item-card ' + (task.completed ? 'completed' : '');
-            div.innerHTML = '<div>' +
-                '<strong>' + task.title + '</strong>' +
-                '<p style="font-size: 0.85rem; color: #4b5563;">' + task.desc + '</p>' +
-                '<small style="color: #6b7280;">📅 Fecha: ' + task.date + (task.fileName ? ' | 📎 ' + task.fileName : '') + '</small>' +
-                '</div>' +
-                '<button class="task-btn" onclick="toggleTask(' + task.id + ')">' + (task.completed ? '✓' : 'Listo') + '</button>';
-            container.appendChild(div);
-        });
-    }
-
-    function toggleTask(id) {
-        savedTasks = savedTasks.map(function(t) {
-            if (t.id === id) t.completed = !t.completed;
-            return t;
-        });
-        localStorage.setItem('userTasks', JSON.stringify(savedTasks));
-        renderTasks();
-    }
-
-    // Exámenes
-    function addNewExam() {
-        var title = document.getElementById('examTitleInput').value.trim();
-        var type = document.getElementById('examType').value;
-        var date = document.getElementById('examDate').value;
-        var topics = document.getElementById('examTopics').value.trim();
-
-        if (!title) return alert('Ingresa el nombre de la evaluación.');
-
-        savedExams.push({
-            id: Date.now(),
-            title: title,
-            type: type,
-            date: date || "Sin fecha",
-            topics: topics || "Temas generales"
-        });
-
-        localStorage.setItem('userExams', JSON.stringify(savedExams));
-        document.getElementById('examTitleInput').value = '';
-        document.getElementById('examTopics').value = '';
-        document.getElementById('examDate').value = '';
-        renderExams();
-    }
-
-    function renderExams() {
-        var container = document.getElementById('examListContainer');
-        if (savedExams.length === 0) {
-            container.innerHTML = '<p style="color: #9ca3af;">No tienes evaluaciones programadas.</p>';
-            return;
-        }
-
-        container.innerHTML = '';
-        savedExams.forEach(function(exam) {
-            var div = document.createElement('div');
-            div.className = 'item-card exam-type';
-            div.innerHTML = '<div>' +
-                '<strong>[' + exam.type + '] ' + exam.title + '</strong>' +
-                '<p style="font-size: 0.85rem; color: #4b5563;">Temas: ' + exam.topics + '</p>' +
-                '<small style="color: #ef4444; font-weight: bold;">📅 Fecha: ' + exam.date + '</small>' +
-                '</div>';
-            container.appendChild(div);
-        });
-    }
-
-    // Tutor IA
-    function generateAIHelp() {
-        var topic = document.getElementById('aiTopic').value.trim();
-        var option = document.getElementById('aiOption').value;
-        var responseBox = document.getElementById('aiResponseBox');
-
-        if (!topic) return alert('Ingresa un tema.');
-
-        responseBox.style.display = 'block';
-
-        if (option === 'exposicion') {
-            responseBox.innerText = '📢 GUIÓN SUGERIDO PARA TU EXPOSICIÓN SOBRE "' + topic.toUpperCase() + '":\n\n' +
-            '1. INTRODUCCIÓN:\n"Buenos días/tardes. Hoy les hablaré sobre ' + topic + '..."\n\n' +
-            '2. PUNTOS CLAVE A MENCIONAR:\n- Definición general de ' + topic + '.\n- Importancia y características principales.\n- Un ejemplo práctico de aplicación.\n\n' +
-            '3. CONCLUSIÓN:\n"En resumen, ' + topic + ' es fundamental porque... Muchas gracias por su atención."';
-        } else {
-            responseBox.innerText = '💡 EXPLICACIÓN SENCILLA SOBRE "' + topic.toUpperCase() + '":\n\n' +
-            'Imagina que ' + topic + ' es una herramienta clave para comprender tu materia.\n\n' +
-            '• ¿Qué es?: Es un concepto principal orientado a organizar el conocimiento.\n' +
-            '• ¿Para qué sirve?: Ayuda a estructurar tus ideas y responder preguntas de examen de forma clara.';
-        }
-    }
-
-    // Examen Práctico
-    var currentQuestions = [];
-
-    function handleFileUpload() {
-        var fileInput = document.getElementById('fileInput');
-        var status = document.getElementById('statusMessage');
-        var file = fileInput.files[0];
-
-        if (!file) {
-            status.innerText = "Generando examen de prueba general...";
-            buildQuestionsFromText("", "Conocimiento General");
-            return;
-        }
-
-        status.innerText = "Procesando documento...";
-        var fileName = file.name.toLowerCase();
-
-        if (fileName.endsWith('.docx')) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                if (window.mammoth) {
-                    mammoth.extractRawText({ arrayBuffer: e.target.result }).then(function(res) {
-                        status.innerText = "";
-                        buildQuestionsFromText(res.value, file.name);
-                    })
+        <b
