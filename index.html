@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AulaOrganizada - IA Educativa v1.3</title>
-    <!-- Librerías de lectura externa -->
+    <title>AulaOrganizada v1.3</title>
+    <!-- Librería para leer archivos Word -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -76,18 +75,22 @@
             margin-top: 4px;
         }
 
-        .menu-item {
+        .menu-btn {
             display: block;
+            width: 100%;
+            text-align: left;
             padding: 12px;
+            background: none;
+            border: none;
             color: #4b5563;
-            text-decoration: none;
             border-radius: 8px;
             margin-bottom: 8px;
             font-weight: 500;
+            font-size: 1rem;
             cursor: pointer;
         }
 
-        .menu-item.active, .menu-item:hover {
+        .menu-btn.active, .menu-btn:hover {
             background-color: #eef2ff;
             color: #4f46e5;
         }
@@ -222,10 +225,10 @@
             </div>
         </div>
 
-        <a class="menu-item active" onclick="switchTab('inicio', this)">🏠 Inicio</a>
-        <a class="menu-item" onclick="switchTab('tareas', this)">📝 Tareas</a>
-        <a class="menu-item" onclick="switchTab('examenes', this)">📅 Exámenes</a>
-        <a class="menu-item" onclick="switchTab('ia', this)">🤖 Tutor IA</a>
+        <button class="menu-btn active" onclick="showTab('inicio', this)">🏠 Inicio</button>
+        <button class="menu-btn" onclick="showTab('tareas', this)">📝 Tareas</button>
+        <button class="menu-btn" onclick="showTab('examenes', this)">📅 Exámenes</button>
+        <button class="menu-btn" onclick="showTab('ia', this)">🤖 Tutor IA</button>
     </div>
 
     <div class="content">
@@ -278,7 +281,7 @@
 
             <div class="card">
                 <h3>Programar Examen / Evaluación</h3>
-                <input type="text" id="examTitleInput" placeholder="Nombre de la evaluación (Ej: Examen de Historia)...">
+                <input type="text" id="examTitleInput" placeholder="Nombre de la evaluación...">
                 
                 <select id="examType">
                     <option value="Examen">Examen Escrito</option>
@@ -320,8 +323,8 @@
 
             <div class="card">
                 <h3>2. Generar Examen Práctico (10 Preguntas)</h3>
-                <p style="font-size: 0.9rem; color: #4b5563; margin-bottom: 12px;">Sube un archivo de estudio (.pdf, .docx, .txt) para practicar:</p>
-                <input type="file" id="fileInput" accept=".txt, .docx, .pdf">
+                <p style="font-size: 0.9rem; color: #4b5563; margin-bottom: 12px;">Sube un archivo (.txt o .docx) para practicar:</p>
+                <input type="file" id="fileInput" accept=".txt, .docx">
                 <button class="btn-primary" onclick="handleFileUpload()">Iniciar Examen de 10 Preguntas</button>
                 <div id="statusMessage" style="margin-top: 8px; font-weight: bold; color: #4f46e5;"></div>
             </div>
@@ -344,78 +347,63 @@
 </div>
 
 <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-
+    // Variables globales
     let streak = parseInt(localStorage.getItem('userStreak')) || 0;
     let coins = parseInt(localStorage.getItem('userCoins')) || 0;
     let lastExamDate = localStorage.getItem('lastExamDate') || "";
     let savedTasks = JSON.parse(localStorage.getItem('userTasks')) || [];
     let savedExams = JSON.parse(localStorage.getItem('userExams')) || [];
 
+    // Cambiar de Pestañas (Garantizado)
+    function showTab(tabName, btnElement) {
+        let sections = document.querySelectorAll('.tab-section');
+        let buttons = document.querySelectorAll('.menu-btn');
+
+        sections.forEach(sec => sec.classList.remove('active'));
+        buttons.forEach(btn => btn.classList.remove('active'));
+
+        document.getElementById('tab-' + tabName).classList.add('active');
+        if (btnElement) btnElement.classList.add('active');
+    }
+
     function updateStatsDisplay() {
-        document.getElementById('streakDisplay').innerText = `${streak} ${streak === 1 ? 'Día' : 'Días'}`;
-        document.getElementById('coinsDisplay').innerText = `${coins}`;
+        document.getElementById('streakDisplay').innerText = streak + (streak === 1 ? ' Día' : ' Días');
+        document.getElementById('coinsDisplay').innerText = coins;
     }
 
     updateStatsDisplay();
     renderTasks();
     renderExams();
-    checkNotifications();
 
-    function switchTab(tabName, element) {
-        document.querySelectorAll('.tab-section').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
-
-        document.getElementById(`tab-${tabName}`).classList.add('active');
-        element.classList.add('active');
-    }
-
-    // Permisos y Gestión de Notificaciones
+    // Activar Notificaciones
     function requestNotificationPermission() {
+        var status = document.getElementById('notifStatus');
         if ("Notification" in window) {
-            Notification.requestPermission().then(permission => {
-                const status = document.getElementById('notifStatus');
+            Notification.requestPermission().then(function(permission) {
                 if (permission === "granted") {
-                    status.innerText = "¡Notificaciones activadas con éxito!";
-                    checkNotifications();
+                    status.innerText = "¡Notificaciones activadas correctamente!";
                 } else {
                     status.innerText = "Permiso de notificaciones denegado.";
                 }
             });
+        } else {
+            status.innerText = "Este navegador no soporta notificaciones.";
         }
     }
 
-    function checkNotifications() {
-        if ("Notification" in window && Notification.permission === "granted") {
-            const todayStr = new Date().toISOString().split('T')[0];
-            
-            savedTasks.forEach(t => {
-                if (t.date === todayStr && !t.completed) {
-                    new Notification("📌 Recordatorio de Tarea Hoy", { body: t.title });
-                }
-            });
-
-            savedExams.forEach(e => {
-                if (e.date === todayStr) {
-                    new Notification("📅 Recordatorio de Evaluación Hoy", { body: `${e.type}: ${e.title}` });
-                }
-            });
-        }
-    }
-
-    // Manejo de Tareas
+    // Tareas
     function addNewTask() {
-        const title = document.getElementById('taskTitle').value.trim();
-        const desc = document.getElementById('taskDesc').value.trim();
-        const date = document.getElementById('taskDate').value;
-        const fileInput = document.getElementById('taskFile');
-        const file = fileInput.files[0];
+        var title = document.getElementById('taskTitle').value.trim();
+        var desc = document.getElementById('taskDesc').value.trim();
+        var date = document.getElementById('taskDate').value;
+        var fileInput = document.getElementById('taskFile');
+        var file = fileInput.files[0];
 
-        if (!title) return alert('Por favor escribe el título de la tarea.');
+        if (!title) return alert('Ingresa el título de la tarea.');
 
         savedTasks.push({
             id: Date.now(),
-            title,
+            title: title,
             desc: desc || "Sin descripción",
             date: date || "Sin fecha",
             fileName: file ? file.name : null,
@@ -431,47 +419,48 @@
     }
 
     function renderTasks() {
-        const container = document.getElementById('taskListContainer');
+        var container = document.getElementById('taskListContainer');
         if (savedTasks.length === 0) {
             container.innerHTML = '<p style="color: #9ca3af;">No tienes tareas guardadas.</p>';
             return;
         }
 
         container.innerHTML = '';
-        savedTasks.forEach(task => {
-            const div = document.createElement('div');
-            div.className = `item-card ${task.completed ? 'completed' : ''}`;
-            div.innerHTML = `
-                <div>
-                    <strong>${task.title}</strong>
-                    <p style="font-size: 0.85rem; color: #4b5563;">${task.desc}</p>
-                    <small style="color: #6b7280;">📅 Fecha: ${task.date} ${task.fileName ? `| 📎 ${task.fileName}` : ''}</small>
-                </div>
-                <button class="task-btn" onclick="toggleTask(${task.id})">${task.completed ? '✓' : 'Listo'}</button>
-            `;
+        savedTasks.forEach(function(task) {
+            var div = document.createElement('div');
+            div.className = 'item-card ' + (task.completed ? 'completed' : '');
+            div.innerHTML = '<div>' +
+                '<strong>' + task.title + '</strong>' +
+                '<p style="font-size: 0.85rem; color: #4b5563;">' + task.desc + '</p>' +
+                '<small style="color: #6b7280;">📅 Fecha: ' + task.date + (task.fileName ? ' | 📎 ' + task.fileName : '') + '</small>' +
+                '</div>' +
+                '<button class="task-btn" onclick="toggleTask(' + task.id + ')">' + (task.completed ? '✓' : 'Listo') + '</button>';
             container.appendChild(div);
         });
     }
 
     function toggleTask(id) {
-        savedTasks = savedTasks.map(t => t.id === id ? {...t, completed: !t.completed} : t);
+        savedTasks = savedTasks.map(function(t) {
+            if (t.id === id) t.completed = !t.completed;
+            return t;
+        });
         localStorage.setItem('userTasks', JSON.stringify(savedTasks));
         renderTasks();
     }
 
-    // Manejo de Exámenes
+    // Exámenes
     function addNewExam() {
-        const title = document.getElementById('examTitleInput').value.trim();
-        const type = document.getElementById('examType').value;
-        const date = document.getElementById('examDate').value;
-        const topics = document.getElementById('examTopics').value.trim();
+        var title = document.getElementById('examTitleInput').value.trim();
+        var type = document.getElementById('examType').value;
+        var date = document.getElementById('examDate').value;
+        var topics = document.getElementById('examTopics').value.trim();
 
-        if (!title) return alert('Por favor escribe el nombre de la evaluación.');
+        if (!title) return alert('Ingresa el nombre de la evaluación.');
 
         savedExams.push({
             id: Date.now(),
-            title,
-            type,
+            title: title,
+            type: type,
             date: date || "Sin fecha",
             topics: topics || "Temas generales"
         });
@@ -484,53 +473,70 @@
     }
 
     function renderExams() {
-        const container = document.getElementById('examListContainer');
+        var container = document.getElementById('examListContainer');
         if (savedExams.length === 0) {
             container.innerHTML = '<p style="color: #9ca3af;">No tienes evaluaciones programadas.</p>';
             return;
         }
 
         container.innerHTML = '';
-        savedExams.forEach(exam => {
-            const div = document.createElement('div');
+        savedExams.forEach(function(exam) {
+            var div = document.createElement('div');
             div.className = 'item-card exam-type';
-            div.innerHTML = `
-                <div>
-                    <strong>[${exam.type}] ${exam.title}</strong>
-                    <p style="font-size: 0.85rem; color: #4b5563;">Temas: ${exam.topics}</p>
-                    <small style="color: #ef4444; font-weight: bold;">📅 Fecha: ${exam.date}</small>
-                </div>
-            `;
+            div.innerHTML = '<div>' +
+                '<strong>[' + exam.type + '] ' + exam.title + '</strong>' +
+                '<p style="font-size: 0.85rem; color: #4b5563;">Temas: ' + exam.topics + '</p>' +
+                '<small style="color: #ef4444; font-weight: bold;">📅 Fecha: ' + exam.date + '</small>' +
+                '</div>';
             container.appendChild(div);
         });
     }
 
-    // Funciones del Tutor IA
+    // Tutor IA
     function generateAIHelp() {
-        const topic = document.getElementById('aiTopic').value.trim();
-        const option = document.getElementById('aiOption').value;
-        const responseBox = document.getElementById('aiResponseBox');
+        var topic = document.getElementById('aiTopic').value.trim();
+        var option = document.getElementById('aiOption').value;
+        var responseBox = document.getElementById('aiResponseBox');
 
-        if (!topic) return alert('Por favor escribe un tema.');
+        if (!topic) return alert('Ingresa un tema.');
 
         responseBox.style.display = 'block';
 
         if (option === 'exposicion') {
-            responseBox.innerText = `📢 GUIÓN SUGERIDO PARA TU EXPOSICIÓN SOBRE "${topic.toUpperCase()}":\n\n` +
-            `1. INTRODUCCIÓN (Saludio y tema):\n"Buenos días/tardes. Hoy les hablaré sobre ${topic}, un tema clave para comprender..."\n\n` +
-            `2. PUNTOS CLAVE A MENCIONAR:\n- Definición general de ${topic}.\n- Características e importancia principal.\n- Un ejemplo práctico de la vida real.\n\n` +
-            `3. CONCLUSIÓN:\n"En resumen, ${topic} nos enseña que... Muchas gracias por su atención."`;
+            responseBox.innerText = '📢 GUIÓN SUGERIDO PARA TU EXPOSICIÓN SOBRE "' + topic.toUpperCase() + '":\n\n' +
+            '1. INTRODUCCIÓN:\n"Buenos días/tardes. Hoy les hablaré sobre ' + topic + '..."\n\n' +
+            '2. PUNTOS CLAVE A MENCIONAR:\n- Definición general de ' + topic + '.\n- Importancia y características principales.\n- Un ejemplo práctico de aplicación.\n\n' +
+            '3. CONCLUSIÓN:\n"En resumen, ' + topic + ' es fundamental porque... Muchas gracias por su atención."';
         } else {
-            responseBox.innerText = `💡 EXPLICACIÓN SENCILLA SOBRE "${topic.toUpperCase()}":\n\n` +
-            `Imagina que ${topic} es como un sistema ordenado. Su objetivo principal es organizar conceptos clave para que todo funcione bien.\n\n` +
-            `• ¿Qué es?: Es la idea fundamental respecto al área estudiada.\n` +
-            `• ¿Para qué sirve?: Ayuda a resolver problemas y estructurar el conocimiento de forma clara y directa.`;
+            responseBox.innerText = '💡 EXPLICACIÓN SENCILLA SOBRE "' + topic.toUpperCase() + '":\n\n' +
+            'Imagina que ' + topic + ' es una herramienta clave para comprender tu materia.\n\n' +
+            '• ¿Qué es?: Es un concepto principal orientado a organizar el conocimiento.\n' +
+            '• ¿Para qué sirve?: Ayuda a estructurar tus ideas y responder preguntas de examen de forma clara.';
         }
     }
 
-    // Examen de 10 preguntas
-    let currentQuestions = [];
+    // Examen Práctico
+    var currentQuestions = [];
 
-    async function handleFileUpload() {
-        const fileInput = document.getElementById('fileInput');
-        const status = document.getElementById('statusMessa
+    function handleFileUpload() {
+        var fileInput = document.getElementById('fileInput');
+        var status = document.getElementById('statusMessage');
+        var file = fileInput.files[0];
+
+        if (!file) {
+            status.innerText = "Generando examen de prueba general...";
+            buildQuestionsFromText("", "Conocimiento General");
+            return;
+        }
+
+        status.innerText = "Procesando documento...";
+        var fileName = file.name.toLowerCase();
+
+        if (fileName.endsWith('.docx')) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                if (window.mammoth) {
+                    mammoth.extractRawText({ arrayBuffer: e.target.result }).then(function(res) {
+                        status.innerText = "";
+                        buildQuestionsFromText(res.value, file.name);
+                    })
