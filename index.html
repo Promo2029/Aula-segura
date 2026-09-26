@@ -249,7 +249,7 @@
     // 5. CONEXIÓN A GEMINI (CÓDIGO ANTI-CONGELAMIENTO)
     // ==========================================
     async function askGemini(promptText) {
-        if (!GEMINI_API_KEY || GEMINI_API_KEY === "AQ.Ab8RN6J7jJkg1Nl9MuXG68KjHwTbvYbt0xerwLZy31cibCHA7A") {
+        if (!GEMINI_API_KEY || GEMINI_API_KEY === "AQ.Ab8RN6Ip17QCvi4hqaSoIQ017_zIewp11hIW-CIqMLXsmjUAcw") {
             return "⚠️ Error: Falta configurar la API Key de Gemini en el código.";
         }
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
