@@ -286,7 +286,7 @@
 <script type="module">
     import { GoogleGenAI } from "@google/genai";
 
-    // 🔑 PEGA TU CLAVE DE API DONDE ESTÁN LOS EMOJIS DE LLAVES:
+    // 🔑 REEMPLAZA LAS TRES LLAVES POR TU CLAVE DE API REAL DENTRO DE LAS COMILLAS:
     const GEMINI_API_KEY = "AQ.Ab8RN6J7jJkg1Nl9MuXG68KjHwTbvYbt0xerwLZy31cibCHA7A"; 
 
     const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
@@ -351,7 +351,7 @@ Instrucciones estrictas:
             prompt = `Eres un tutor de oratoria y contenido académico.
 El estudiante tiene una exposición sobre: "${topic}" (Título: "${exam.title}").
 
-Instrucciones strictly aplicadas:
+Instrucciones estrictas:
 1. Detecta cuál es el tema real expuesto y redacta un guión hablado literal y fluido para la exposición (Saludo, Introducción conceptual al tema real, Desarrollo de puntos principales y Conclusión).
 2. NO uses comodines ni estructuras fijas vacías. El guión debe tratar explícitamente y de fondo sobre "${topic}".
 3. Añade 2 consejos prácticos de presentación al final.`;
@@ -558,4 +558,4 @@ Instrucciones estrictas:
                 for (var i = 0; i < pendingTasks.length; i++) {
                     var t = pendingTasks[i];
                     homeTaskList.innerHTML += '<div style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">' +
-                        '<strong>' + t.title + '</strong> -
+                        '<strong>' + t.title + '
