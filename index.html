@@ -9,7 +9,17 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
-    <title>AulaOrganizada v2.1</title>
+    <title>AulaOrganizada v3.0 (con Gemini IA en Vivo)</title>
+    
+    <!-- Carga del SDK oficial de Google Generative AI -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@google/genai": "https://esm.run/@google/genai"
+        }
+      }
+    </script>
+
     <style>
         * {
             box-sizing: border-box;
@@ -131,6 +141,7 @@
         }
 
         .btn-ai:hover { background-color: #047857; }
+        .btn-ai:disabled { background-color: #9ca3af; cursor: not-allowed; }
 
         .item-card {
             background: #f8fafc;
@@ -225,7 +236,7 @@
 
             <div class="card">
                 <h3>Añadir Nueva Tarea</h3>
-                <input type="text" id="taskTitle" placeholder="Título de la tarea (ej: Función de relación en los seres vivos)...">
+                <input type="text" id="taskTitle" placeholder="Ej: Consultar la Fotosíntesis...">
                 <textarea id="taskDesc" placeholder="Detalles de lo que debes realizar o consultar..."></textarea>
                 
                 <label style="font-size: 0.85rem; color: #4b5563;">Fecha de entrega:</label>
@@ -247,18 +258,18 @@
 
             <div class="card">
                 <h3>Programar Examen / Evaluación</h3>
-                <input type="text" id="examTitleInput" placeholder="Nombre de la evaluación (ej: Examen de Biología)...">
+                <input type="text" id="examTitleInput" placeholder="Ej: Exposición sobre la Célula...">
                 
                 <select id="examType">
-                    <option value="Examen Escrito">Examen Escrito / Quiz</option>
                     <option value="Exposición Oral">Exposición Oral / Debate</option>
+                    <option value="Examen Escrito">Examen Escrito / Quiz</option>
                     <option value="Taller Principal">Taller / Trabajo Final</option>
                 </select>
 
                 <label style="font-size: 0.85rem; color: #4b5563;">Fecha del Examen / Evaluación:</label>
                 <input type="date" id="examDate">
 
-                <textarea id="examTopics" placeholder="Temas específicos a evaluar (ej: La función de relación y los sentidos)..."></textarea>
+                <textarea id="examTopics" placeholder="Temas específicos a evaluar..."></textarea>
 
                 <button class="btn-primary" onclick="addNewExam()">Programar Evaluación</button>
             </div>
@@ -272,8 +283,96 @@
     </div>
 </div>
 
+<script type="module">
+    import { GoogleGenAI } from "@google/genai";
+
+    // 🔑 PEGA TU CLAVE DE API DONDE ESTÁN LOS EMOJIS DE LLAVES:
+    const GEMINI_API_KEY = "AQ.Ab8RN6J7jJkg1Nl9MuXG68KjHwTbvYbt0xerwLZy31cibCHA7A"; 
+
+    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+
+    // Función que conecta con Gemini en tiempo real
+    async function askGemini(promptText) {
+        if (!GEMINI_API_KEY || GEMINI_API_KEY === "AQ.Ab8RN6J7jJkg1Nl9MuXG68KjHwTbvYbt0xerwLZy31cibCHA7A") {
+            return "⚠️ Error: Debes ingresar tu API Key de Gemini para activar las respuestas en vivo.";
+        }
+
+        try {
+            const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: promptText,
+            });
+            return response.text;
+        } catch (error) {
+            console.error("Error al consultar Gemini:", error);
+            return "❌ Ocurrió un error al conectar con Gemini. Por favor verifica tu conexión a internet o la API Key.";
+        }
+    }
+
+    // Funciones globales de asistencia con IA
+    window.generateTaskGuide = async function(id) {
+        let task = savedTasks.find(t => t.id === id);
+        if (!task) return;
+
+        let btn = document.getElementById(`btn-task-${id}`);
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = "⏳ Consultando a Gemini en vivo...";
+        }
+
+        let prompt = `Eres un tutor académico experto.
+Analiza y explica en profundidad el tema especificado en este título de tarea: "${task.title}".
+Detalles adicionales dados por el estudiante: "${task.desc}".
+
+Instrucciones estrictas:
+1. Identifica claramente de qué trata el tema y da una explicación conceptual directa, objetiva y detallada sobre qué es. NO uses comodines, plantillas preescritas ni selecciones de opciones prefijadas.
+2. Detalla los puntos clave, eventos, fases o componentes esenciales que el estudiante debe conocer sobre este tema.
+3. Brinda una recomendación clara sobre cómo enfocar la consulta o tarea.`;
+
+        task.guideText = await askGemini(prompt);
+        localStorage.setItem('userTasks', JSON.stringify(savedTasks));
+        renderAll();
+    };
+
+    window.generateExamStudy = async function(id) {
+        let exam = savedExams.find(e => e.id === id);
+        if (!exam) return;
+
+        let btn = document.getElementById(`btn-exam-${id}`);
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = "⏳ Generando contenido con Gemini en vivo...";
+        }
+
+        let topic = exam.topics || exam.title;
+        let prompt = "";
+
+        if (exam.type === "Exposición Oral") {
+            prompt = `Eres un tutor de oratoria y contenido académico.
+El estudiante tiene una exposición sobre: "${topic}" (Título: "${exam.title}").
+
+Instrucciones strictly aplicadas:
+1. Detecta cuál es el tema real expuesto y redacta un guión hablado literal y fluido para la exposición (Saludo, Introducción conceptual al tema real, Desarrollo de puntos principales y Conclusión).
+2. NO uses comodines ni estructuras fijas vacías. El guión debe tratar explícitamente y de fondo sobre "${topic}".
+3. Añade 2 consejos prácticos de presentación al final.`;
+        } else {
+            prompt = `Eres un tutor académico de preparación de exámenes.
+El estudiante evaluará el tema: "${topic}" (Título de la evaluación: "${exam.title}").
+
+Instrucciones estrictas:
+1. Identifica el tema específico y genera una guía de estudio conceptual y detallada que explique a fondo los conceptos centrales que debe estudiar.
+2. Resume los datos, fórmulas, causas o elementos claves a memorizar y repasar.
+3. Incluye 2 preguntas probables de examen con sus respuestas explicadas.`;
+        }
+
+        exam.studyText = await askGemini(prompt);
+        localStorage.setItem('userExams', JSON.stringify(savedExams));
+        renderAll();
+    };
+</script>
+
 <script>
-    // Navegación universal para PC y Celulares
+    // Control de navegación entre pestañas
     function showTab(tabName, btnElement) {
         var sections = document.querySelectorAll('.tab-section');
         sections.forEach(function(sec) {
@@ -315,30 +414,6 @@
         }
     }
 
-    // LÓGICA DE EXPLICACIÓN INTELIGENTE (Procesa el tema introducido)
-    function buildExplanation(topicText, isExam, examType) {
-        var cleanTopic = topicText.trim();
-        
-        if (isExam && examType === "Exposición Oral") {
-            return "📢 GUIÓN PARA TU EXPOSICIÓN ORAL SOBRE: " + cleanTopic.toUpperCase() + "\n\n" +
-                "1. INTRODUCCIÓN SUGERIDA:\n\"Buenos días a todos. Hoy les presentaré el tema: " + cleanTopic + ". Este es un proceso fundamental para comprender nuestro entorno...\"\n\n" +
-                "2. PUNTOS CLAVE A EXPLICAR:\n" +
-                "• ¿Qué es? Explica el concepto de " + cleanTopic + " de forma breve.\n" +
-                "• Componentes o etapas principales involucradas.\n" +
-                "• Ejemplo práctico o cotidiano donde se evidencie.\n\n" +
-                "3. CONCLUSIÓN:\n\"En resumen, comprender " + cleanTopic + " nos ayuda a entender cómo funcionan estos procesos en la vida diaria. Quedo atento a sus preguntas.\"";
-        }
-
-        return "💡 EXPLICACIÓN Y CONCEPTOS CLAVE SOBRE: " + cleanTopic.toUpperCase() + "\n\n" +
-            "• CONCEPTO PRINCIPAL:\n" + cleanTopic + " es el proceso o tema académico que permite a los organismos o sistemas procesar información y reaccionar de manera adecuada.\n\n" +
-            "• ELEMENTOS / ETAPAS CLAVE:\n" +
-            "1. Captación de Estímulos: Detectar la información o cambios del entorno.\n" +
-            "2. Procesamiento: Analizar la información y elaborar la respuesta adecuada.\n" +
-            "3. Ejecución: Llevar a cabo la acción o respuesta correspondiente.\n\n" +
-            "• RESUMEN PARA TU ENTREGA O EXAMEN:\nAl responder sobre " + cleanTopic + ", enfócate en explicar cómo se conecta el estímulo inicial con la respuesta final producida.";
-    }
-
-    // --- MANEJO DE TAREAS ---
     function addNewTask() {
         var title = document.getElementById('taskTitle').value.trim();
         var desc = document.getElementById('taskDesc').value.trim();
@@ -375,20 +450,6 @@
         renderAll();
     }
 
-    function generateTaskGuide(id) {
-        for (var i = 0; i < savedTasks.length; i++) {
-            if (savedTasks[i].id === id) {
-                var task = savedTasks[i];
-                var topic = task.title + (task.desc !== "Sin descripción adicional" ? " (" + task.desc + ")" : "");
-                task.guideText = buildExplanation(topic, false, null);
-                break;
-            }
-        }
-        localStorage.setItem('userTasks', JSON.stringify(savedTasks));
-        renderAll();
-    }
-
-    // --- MANEJO DE EXÁMENES ---
     function addNewExam() {
         var title = document.getElementById('examTitleInput').value.trim();
         var type = document.getElementById('examType').value;
@@ -416,19 +477,6 @@
         renderAll();
     }
 
-    function generateExamStudy(id) {
-        for (var i = 0; i < savedExams.length; i++) {
-            if (savedExams[i].id === id) {
-                var exam = savedExams[i];
-                exam.studyText = buildExplanation(exam.topics, true, exam.type);
-                break;
-            }
-        }
-        localStorage.setItem('userExams', JSON.stringify(savedExams));
-        renderAll();
-    }
-
-    // --- RENDERIZADO GENERAL ---
     function renderAll() {
         renderTasks();
         renderExams();
@@ -459,7 +507,7 @@
                 '</div>' +
                 '<p style="font-size: 0.85rem; color: #4b5563; margin-bottom: 6px;">' + task.desc + '</p>' +
                 '<small style="color: #6b7280;">📅 Entrega: ' + task.date + '</small><br>' +
-                '<button class="btn-ai" onclick="generateTaskGuide(' + task.id + ')">🤖 Explicar Tema (Modo Guía)</button>' +
+                '<button id="btn-task-' + task.id + '" class="btn-ai" onclick="generateTaskGuide(' + task.id + ')">🤖 Explicar Tema (Gemini en vivo)</button>' +
                 guideHTML;
 
             container.appendChild(div);
@@ -490,7 +538,7 @@
                 '</div>' +
                 '<p style="font-size: 0.85rem; color: #4b5563; margin-bottom: 6px;">Temas: ' + exam.topics + '</p>' +
                 '<small style="color: #ef4444; font-weight: bold;">📅 Fecha: ' + exam.date + '</small><br>' +
-                '<button class="btn-ai" onclick="generateExamStudy(' + exam.id + ')">🤖 ' + (exam.type === "Exposición Oral" ? "Generar Guión Oral" : "Explicar Tema del Examen") + '</button>' +
+                '<button id="btn-exam-' + exam.id + '" class="btn-ai" onclick="generateExamStudy(' + exam.id + ')">🤖 ' + (exam.type === "Exposición Oral" ? "Generar Guión Oral" : "Explicar Tema del Examen") + '</button>' +
                 studyHTML;
 
             container.appendChild(div);
@@ -510,33 +558,4 @@
                 for (var i = 0; i < pendingTasks.length; i++) {
                     var t = pendingTasks[i];
                     homeTaskList.innerHTML += '<div style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">' +
-                        '<strong>' + t.title + '</strong> - <small style="color: #4f46e5;">📅 ' + t.date + '</small>' +
-                    '</div>';
-                }
-            }
-        }
-
-        if (homeExamList) {
-            if (savedExams.length === 0) {
-                homeExamList.innerHTML = '<p style="color: #9ca3af;">No tienes exámenes pendientes.</p>';
-            } else {
-                homeExamList.innerHTML = '';
-                for (var j = 0; j < savedExams.length; j++) {
-                    var e = savedExams[j];
-                    homeExamList.innerHTML += '<div style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">' +
-                        '<strong>[' + e.type + '] ' + e.title + '</strong> - <small style="color: #ef4444;">📅 ' + e.date + '</small>' +
-                    '</div>';
-                }
-            }
-        }
-    }
-
-    // Inicialización compatible universalmente (PC / MÓVIL)
-    document.addEventListener('DOMContentLoaded', function() {
-        showTab('inicio');
-        renderAll();
-    });
-</script>
-
-</body>
-</html>
+                        '<strong>' + t.title + '</strong> -
