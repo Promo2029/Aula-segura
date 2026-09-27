@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AulaOrganizada v5.0</title>
+    <title>AulaOrganizada v5.1</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f4f6f9; color: #333; }
@@ -243,15 +243,14 @@
     }
 
     // ==========================================
-    // 5. CONEXIÓN DIRECTA A GEMINI (ESTABLE)
+    // 5. CONEXIÓN OPTIMIZADA A GEMINI
     // ==========================================
     async function askGemini(promptText) {
-        if (!GEMINI_API_KEY || GEMINI_API_KEY === "AQ.Ab8RN6Ir9qqong0Q1EwFbV3u_uEaj3OXOGZNNkcpWQQZIo3Phw") {
+        if (!GEMINI_API_KEY || GEMINI_API_KEY === "AQ.Ab8RN6L_nBlqmJmU89mbg0_IONOketOAwd4iX2A2xTpdKnzt6Q") {
             return "⚠️ Error: Falta configurar la API Key de Gemini en el código.";
         }
 
-        // Usamos el endpoint oficial de Gemini con v1 en lugar de v1beta para mayor compatibilidad
-        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
         
         try {
             const response = await fetch(url, {
