@@ -272,7 +272,7 @@
     }
 
     // ==========================================
-    // 5. CONEXIÓN DIRECTA CON GEMINI 2.0 FLASH
+    // 5. CONEXIÓN DIRECTA CON GEMINI 3.8 FLASH
     // ==========================================
     async function askGemini(promptText) {
         let apiKey = localStorage.getItem('user_gemini_api_key');
@@ -281,8 +281,8 @@
         }
 
         try {
-            // Actualizado al modelo oficial gemini-2.0-flash en la ruta v1
-            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            // Actualizado al modelo oficial gemini-3.8-flash solicitado por la API
+            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
             
             const response = await fetch(url, {
                 method: 'POST',
