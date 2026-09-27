@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AulaOrganizada v7.0 - Segura</title>
+    <title>AulaOrganizada v7.1 - API Pura</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f4f6f9; color: #333; }
@@ -270,39 +270,40 @@
     }
 
     // ==========================================
-    // 5. MOTOR DE IA CON LLAVE SEGURA Y RESPALDO
+    // 5. CONEXIÓN PURA A LA API DE GEMINI (SIN RESPALDOS FALSOS)
     // ==========================================
-    async function askGemini(promptText, title, details) {
+    async function askGemini(promptText) {
         let apiKey = localStorage.getItem('user_gemini_api_key');
 
-        if (apiKey) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-            try {
-                const response = await fetch(url, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
-                });
-                const data = await response.json();
-                if (data.candidates && data.candidates[0].content.parts[0].text) {
-                    return data.candidates[0].content.parts[0].text;
-                }
-            } catch (e) {
-                console.warn("Error de red con la API, usando respaldo inteligente local.");
-            }
+        if (!apiKey) {
+            return "⚠️ Atención: No has guardado ninguna API Key en la pestaña 'Inicio'. Por favor ingrésala para consultar a la IA.";
         }
 
-        // MOTOR DE RESPALDO INTELIGENTE (si no hay clave guardada o la red falla)
-        return `🤖 [Asistente Académico Inteligente]\n\n` +
-               `📌 **Análisis de "${title}"**:\n` +
-               `${details ? 'Detalles: ' + details : 'Sin detalles adicionales.'}\n\n` +
-               `💡 **Desarrollo y Estructura Sugerida**:\n` +
-               `1. **Introducción Conceptual**: Define los conceptos centrales relacionados con "${title}".\n` +
-               `2. **Puntos Clave a Desarrollar**:\n` +
-               `   - Analiza las variables principales del tema.\n` +
-               `   - Organiza la información en subtemas lógicos.\n` +
-               `3. **Conclusión o Síntesis**: Cierra con una síntesis que conecte todos los puntos evaluados.\n\n` +
-               `✨ *Tip*: Configura tu API Key segura arriba en la pestaña Inicio para respuestas personalizadas con IA en tiempo real.`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                console.error("Detalle del error API de Google:", data.error);
+                return "❌ Error de Google: " + (data.error.message || "Clave inválida o error en la petición.");
+            }
+
+            if (data.candidates && data.candidates[0].content.parts[0].text) {
+                return data.candidates[0].content.parts[0].text;
+            } else {
+                return "❌ La IA de Gemini no devolvió una respuesta válida.";
+            }
+        } catch (error) {
+            console.error("Error de red:", error);
+            return "❌ Error de red al intentar conectar con Gemini. Revisa tu conexión a internet.";
+        }
     }
 
     async function generateTaskGuide(id) {
@@ -311,10 +312,10 @@
 
         let btn = document.getElementById(`btn-task-${id}`);
         btn.disabled = true;
-        btn.innerText = "⏳ Generando ayuda...";
+        btn.innerText = "⏳ Consultando a Gemini...";
 
-        let prompt = `Explica a detalle y da una estructura paso a paso para resolver la tarea titulada "${task.title}". Detalles: "${task.desc}"`;
-        task.guideText = await askGemini(prompt, task.title, task.desc);
+        let prompt = `Explica brevemente y da una guía de estudio para la tarea: "${task.title}". Detalles: "${task.desc}"`;
+        task.guideText = await askGemini(prompt);
         localStorage.setItem('userTasks', JSON.stringify(savedTasks));
         renderAll();
     }
@@ -327,8 +328,8 @@
         btn.disabled = true;
         btn.innerText = "⏳ Generando guía...";
 
-        let prompt = `Genera una guía de estudio completa y estructurada para un ${exam.type} titulado "${exam.title}" sobre los temas: "${exam.topics}"`;
-        exam.studyText = await askGemini(prompt, exam.title, exam.topics);
+        let prompt = `Genera una guía de estudio rápida para un ${exam.type} titulado "${exam.title}" sobre los temas: "${exam.topics}"`;
+        exam.studyText = await askGemini(prompt);
         localStorage.setItem('userExams', JSON.stringify(savedExams));
         renderAll();
     }
