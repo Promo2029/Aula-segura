@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AulaOrganizada - Versión Estable v1</title>
+    <title>AulaOrganizada - Versión Definitiva</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f4f6f9; color: #333; }
@@ -272,7 +272,7 @@
     }
 
     // ==========================================
-    // 5. CONEXIÓN DIRECTA CON RUTA ESTABLE v1
+    // 5. CONEXIÓN DIRECTA CON GEMINI 2.0 FLASH
     // ==========================================
     async function askGemini(promptText) {
         let apiKey = localStorage.getItem('user_gemini_api_key');
@@ -281,8 +281,8 @@
         }
 
         try {
-            // Usamos la ruta estable 'v1' y el modelo 'gemini-1.5-flash'
-            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            // Actualizado al modelo oficial gemini-2.0-flash en la ruta v1
+            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
             
             const response = await fetch(url, {
                 method: 'POST',
