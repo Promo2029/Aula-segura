@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AulaOrganizada v6.1 - IA Inteligente</title>
+    <title>AulaOrganizada v7.0 - Segura</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f4f6f9; color: #333; }
@@ -34,7 +34,7 @@
         .card h3 { margin-bottom: 15px; color: #1f2937; }
         
         /* FORMULARIOS Y BOTONES */
-        input[type="text"], input[type="date"], select, textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 12px; font-size: 1rem; }
+        input[type="text"], input[type="date"], input[type="password"], select, textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 12px; font-size: 1rem; }
         textarea { resize: vertical; min-height: 80px; }
         .btn-primary { background-color: #4f46e5; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1rem; margin-top: 5px; }
         .btn-primary:hover { background-color: #4338ca; }
@@ -51,6 +51,7 @@
         
         /* RESPUESTA DE LA IA */
         .ai-guide-box { background: #eef2ff; border: 1px solid #c7d2fe; padding: 16px; border-radius: 8px; margin-top: 12px; white-space: pre-wrap; font-size: 0.95rem; color: #1e1b4b; line-height: 1.5; }
+        .api-success { color: #059669; font-size: 0.85rem; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -76,6 +77,15 @@
             <h1>Resumen Académico</h1>
             <p style="color: #6b7280; margin-bottom: 20px;">Tu panel principal de control y gamificación.</p>
             
+            <!-- CONFIGURACIÓN SEGURA DE LA API KEY -->
+            <div class="card" style="border: 2px dashed #4f46e5;">
+                <h3>🔐 Configuración Segura de la API Key</h3>
+                <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 10px;">Tu clave se guarda de forma privada en tu navegador y nunca se expone en el código público.</p>
+                <input type="password" id="apiKeyInput" placeholder="Pega aquí tu API Key de Gemini (AIzaSy...)...">
+                <button class="btn-primary" onclick="saveApiKey()">Guardar Clave Segura</button>
+                <p id="apiKeyStatus" class="api-success"></p>
+            </div>
+
             <div class="card">
                 <h3>🔔 Recordatorios Generales</h3>
                 <button class="btn-primary" onclick="requestNotificationPermission()">Activar Notificaciones</button>
@@ -129,9 +139,26 @@
 
 <script>
     // ==========================================
-    // 1. CONFIGURACIÓN DE LA API KEY DE GEMINI
+    // 1. GESTIÓN PRIVADA DE LA API KEY (LOCALSTORAGE)
     // ==========================================
-    const GEMINI_API_KEY = "AQ.Ab8RN6L_nBlqmJmU89mbg0_IONOketOAwd4iX2A2xTpdKnzt6Q"; 
+    function saveApiKey() {
+        let key = document.getElementById('apiKeyInput').value.trim();
+        if (!key) return alert("Por favor ingresa una clave válida.");
+        localStorage.setItem('user_gemini_api_key', key);
+        document.getElementById('apiKeyInput').value = '';
+        checkApiKeyStatus();
+        alert("¡Clave guardada de forma segura en tu navegador!");
+    }
+
+    function checkApiKeyStatus() {
+        let storedKey = localStorage.getItem('user_gemini_api_key');
+        let statusEl = document.getElementById('apiKeyStatus');
+        if (storedKey) {
+            statusEl.innerText = "✅ API Key configurada correctamente y protegida.";
+        } else {
+            statusEl.innerText = "⚠️ No hay API Key configurada en este navegador.";
+        }
+    }
 
     // ==========================================
     // 2. ESTADO Y GAMIFICACIÓN (RACHA Y MONEDAS)
@@ -243,12 +270,13 @@
     }
 
     // ==========================================
-    // 5. INTELIGENCIA ARTIFICIAL CON MOTOR DE RESPALDO PROFUNDO
+    // 5. MOTOR DE IA CON LLAVE SEGURA Y RESPALDO
     // ==========================================
     async function askGemini(promptText, title, details) {
-        // Intenta consultar la API real
-        if (GEMINI_API_KEY && GEMINI_API_KEY !== "AQ.Ab8RN6L_nBlqmJmU89mbg0_IONOketOAwd4iX2A2xTpdKnzt6Q") {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        let apiKey = localStorage.getItem('user_gemini_api_key');
+
+        if (apiKey) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
             try {
                 const response = await fetch(url, {
                     method: "POST",
@@ -260,21 +288,21 @@
                     return data.candidates[0].content.parts[0].text;
                 }
             } catch (e) {
-                console.warn("Fallo de red con la API, activando asistencia inteligente local.");
+                console.warn("Error de red con la API, usando respaldo inteligente local.");
             }
         }
 
-        // MOTOR DE RESPALDO PROFUNDO (Analiza el título y detalles para generar contenido real)
+        // MOTOR DE RESPALDO INTELIGENTE (si no hay clave guardada o la red falla)
         return `🤖 [Asistente Académico Inteligente]\n\n` +
                `📌 **Análisis de "${title}"**:\n` +
-               `${details ? 'Detalles proporcionados: ' + details : 'Sin detalles adicionales especificados.'}\n\n` +
+               `${details ? 'Detalles: ' + details : 'Sin detalles adicionales.'}\n\n` +
                `💡 **Desarrollo y Estructura Sugerida**:\n` +
-               `1. **Introducción Conceptual**: Para abordar este tema de forma correcta, define primero los conceptos centrales relacionados con "${title}". Asegúrate de contextualizar el propósito principal del trabajo.\n` +
+               `1. **Introducción Conceptual**: Define los conceptos centrales relacionados con "${title}".\n` +
                `2. **Puntos Clave a Desarrollar**:\n` +
-               `   - Analiza las causas, características o variables principales.\n` +
-               `   - Organiza la información en subtemas lógicos para facilitar su comprensión o exposición.\n` +
-               `3. **Conclusión o Síntesis**: Cierra con una reflexión crítica o un resumen que conecte todos los puntos evaluados.\n\n` +
-               `✨ *Tip*: Utiliza esta estructura como guía base para redactar tu contenido paso a paso. ¡Mucho éxito con tu entrega!`;
+               `   - Analiza las variables principales del tema.\n` +
+               `   - Organiza la información en subtemas lógicos.\n` +
+               `3. **Conclusión o Síntesis**: Cierra con una síntesis que conecte todos los puntos evaluados.\n\n` +
+               `✨ *Tip*: Configura tu API Key segura arriba en la pestaña Inicio para respuestas personalizadas con IA en tiempo real.`;
     }
 
     async function generateTaskGuide(id) {
@@ -345,6 +373,7 @@
     // Inicializar al cargar
     window.onload = () => {
         checkRacha();
+        checkApiKeyStatus();
         renderAll();
     };
 </script>
