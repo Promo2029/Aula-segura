@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AulaOrganizada - Definitiva</title>
+    <title>AulaOrganizada - Versión Final Estable</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f4f6f9; color: #333; }
@@ -77,12 +77,12 @@
             <h1>Resumen Académico</h1>
             <p style="color: #6b7280; margin-bottom: 20px;">Tu panel principal de control y gamificación.</p>
             
-            <!-- CONFIGURACIÓN SEGURA DE LA API KEY -->
+            <!-- CONFIGURACIÓN DE LA API KEY -->
             <div class="card" style="border: 2px dashed #4f46e5;">
                 <h3>🔐 Configuración de la API Key de Gemini</h3>
-                <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 10px;">Ingresa tu clave aquí. Se guardará de forma privada en tu navegador para que GitHub no la bloquee.</p>
+                <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 10px;">Pega tu clave aquí de forma privada. GitHub no la verá y se guardará en tu navegador.</p>
                 <input type="password" id="apiKeyInput" placeholder="Pega tu clave (AIzaSy...) aquí...">
-                <button class="btn-primary" onclick="saveApiKey()">Guardar Clave en el Navegador</button>
+                <button class="btn-primary" onclick="saveApiKey()">Guardar Clave</button>
                 <p id="apiKeyStatus" class="api-status"></p>
             </div>
 
@@ -139,7 +139,7 @@
 
 <script>
     // ==========================================
-    // 1. GESTIÓN PRIVADA DE LA API KEY
+    // 1. GESTIÓN SEGURA DE LA API KEY
     // ==========================================
     function saveApiKey() {
         let key = document.getElementById('apiKeyInput').value.trim();
@@ -147,7 +147,7 @@
         localStorage.setItem('user_gemini_api_key', key);
         document.getElementById('apiKeyInput').value = '';
         checkApiKeyStatus();
-        alert("¡Clave guardada con éxito!");
+        alert("¡Clave guardada con éxito en tu navegador!");
     }
 
     function checkApiKeyStatus() {
@@ -155,7 +155,7 @@
         let statusEl = document.getElementById('apiKeyStatus');
         if (storedKey) {
             statusEl.style.color = "#059669";
-            statusEl.innerText = "✅ API Key configurada y protegida en este navegador.";
+            statusEl.innerText = "✅ API Key configurada y lista para usarse.";
         } else {
             statusEl.style.color = "#d97706";
             statusEl.innerText = "⚠️ Advertencia: No hay API Key guardada.";
@@ -272,39 +272,42 @@
     }
 
     // ==========================================
-    // 5. CONEXIÓN REAL A LA API DE GEMINI
+    // 5. CONEXIÓN DIRECTA A LA API DE GEMINI (CON DIAGNÓSTICO)
     // ==========================================
     async function askGemini(promptText) {
         let apiKey = localStorage.getItem('user_gemini_api_key');
-
         if (!apiKey) {
-            return "⚠️ Primero debes ingresar y guardar tu API Key de Gemini en la pestaña 'Inicio'.";
+            return "⚠️ Atención: No has guardado ninguna API Key en la pestaña 'Inicio'. Por favor ingrésala y guárdala.";
         }
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-        
+
         try {
             const response = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{ text: promptText }]
+                    }]
+                })
             });
 
             const data = await response.json();
 
-            if (data.error) {
-                console.error("Error de la API:", data.error);
-                return "❌ Error de Google: " + (data.error.message || "Clave inválida o revocada. Genera una nueva clave limpia en AI Studio.");
+            if (!response.ok) {
+                let errorMsg = data.error ? data.error.message : "Error desconocido en el servidor de Google.";
+                return `❌ Error de la API de Google: ${errorMsg}`;
             }
 
-            if (data.candidates && data.candidates[0].content.parts[0].text) {
+            if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
                 return data.candidates[0].content.parts[0].text;
             } else {
-                return "❌ La IA no devolvió una respuesta válida.";
+                return "❌ La respuesta de la IA llegó vacía o con un formato inesperado.";
             }
         } catch (error) {
-            console.error("Error de red:", error);
-            return "❌ Error de red o bloqueo CORS al conectar con Gemini. Verifica tu conexión.";
+            console.error("Fallo de red:", error);
+            return "❌ Error de conexión o bloqueo de red al intentar contactar con la API de Gemini.";
         }
     }
 
@@ -314,9 +317,9 @@
 
         let btn = document.getElementById(`btn-task-${id}`);
         btn.disabled = true;
-        btn.innerText = "⏳ Consultando a la IA...";
+        btn.innerText = "⏳ Consultando a Gemini...";
 
-        let prompt = `Actúa como un tutor académico experto. Explica detalladamente, da conceptos clave y estructura una guía paso a paso para resolver la tarea titulada "${task.title}". Detalles adicionales: "${task.desc}".`;
+        let prompt = `Actúa como un tutor académico experto. Explica detalladamente, proporciona conceptos clave, un marco teórico y una guía paso a paso para resolver la tarea titulada "${task.title}". Detalles específicos proporcionados: "${task.desc}".`;
         
         task.guideText = await askGemini(prompt);
         localStorage.setItem('userTasks', JSON.stringify(savedTasks));
@@ -329,9 +332,9 @@
 
         let btn = document.getElementById(`btn-exam-${id}`);
         btn.disabled = true;
-        btn.innerText = "⏳ Generando guía...";
+        btn.innerText = "⏳ Generando guía de estudio...";
 
-        let prompt = `Actúa como un tutor académico experto. Genera una guía de estudio completa, con conceptos clave y estructura teórica para un ${exam.type} titulado "${exam.title}" sobre los temas: "${exam.topics}".`;
+        let prompt = `Actúa como un tutor académico experto. Genera una guía de estudio completa, profunda y estructurada (con conceptos clave y explicaciones teóricas) para un ${exam.type} titulado "${exam.title}" sobre los temas: "${exam.topics}".`;
         
         exam.studyText = await askGemini(prompt);
         localStorage.setItem('userExams', JSON.stringify(savedExams));
@@ -365,7 +368,7 @@
                 <p style="font-size: 0.85rem;">Temas: ${e.topics}</p>
                 <small style="color: red;">📅 Fecha: ${e.date}</small><br>
                 <button id="btn-exam-${e.id}" class="btn-ai" onclick="generateExamStudy(${e.id})">🤖 Generar Guía de Estudio</button>
-                ${e.studyText ? `<div class="ai-guide-box">${e.studyText}</div>` : ''}
+                ${e.studyText ? `<div class="ai-guide-box">${e.studyText}</div>` : `</div>`}
             </div>
         `).join('') || '<p style="color: #9ca3af;">No hay exámenes programados.</p>';
 
