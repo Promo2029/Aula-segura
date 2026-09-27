@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AulaOrganizada v8.5 - Tutor Académico Avanzado</title>
+    <title>AulaOrganizada - Definitiva</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f4f6f9; color: #333; }
@@ -34,12 +34,13 @@
         .card h3 { margin-bottom: 15px; color: #1f2937; }
         
         /* FORMULARIOS Y BOTONES */
-        input[type="text"], input[type="date"], select, textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 12px; font-size: 1rem; }
+        input[type="text"], input[type="date"], input[type="password"], select, textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 12px; font-size: 1rem; }
         textarea { resize: vertical; min-height: 80px; }
         .btn-primary { background-color: #4f46e5; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1rem; margin-top: 5px; }
         .btn-primary:hover { background-color: #4338ca; }
         .btn-ai { background-color: #059669; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-top: 8px; }
         .btn-ai:hover { background-color: #047857; }
+        .btn-ai:disabled { background-color: #9ca3af; cursor: not-allowed; }
         
         /* ELEMENTOS DE LISTA */
         .item-card { background: #f8fafc; border-left: 4px solid #4f46e5; padding: 16px; border-radius: 6px; margin-bottom: 12px; }
@@ -50,6 +51,7 @@
         
         /* RESPUESTA DE LA IA */
         .ai-guide-box { background: #eef2ff; border: 1px solid #c7d2fe; padding: 16px; border-radius: 8px; margin-top: 12px; white-space: pre-wrap; font-size: 0.95rem; color: #1e1b4b; line-height: 1.6; }
+        .api-status { font-size: 0.85rem; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -75,6 +77,15 @@
             <h1>Resumen Académico</h1>
             <p style="color: #6b7280; margin-bottom: 20px;">Tu panel principal de control y gamificación.</p>
             
+            <!-- CONFIGURACIÓN SEGURA DE LA API KEY -->
+            <div class="card" style="border: 2px dashed #4f46e5;">
+                <h3>🔐 Configuración de la API Key de Gemini</h3>
+                <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 10px;">Ingresa tu clave aquí. Se guardará de forma privada en tu navegador para que GitHub no la bloquee.</p>
+                <input type="password" id="apiKeyInput" placeholder="Pega tu clave (AIzaSy...) aquí...">
+                <button class="btn-primary" onclick="saveApiKey()">Guardar Clave en el Navegador</button>
+                <p id="apiKeyStatus" class="api-status"></p>
+            </div>
+
             <div class="card">
                 <h3>🔔 Recordatorios Generales</h3>
                 <button class="btn-primary" onclick="requestNotificationPermission()">Activar Notificaciones</button>
@@ -128,7 +139,31 @@
 
 <script>
     // ==========================================
-    // 1. ESTADO Y GAMIFICACIÓN (RACHA Y MONEDAS)
+    // 1. GESTIÓN PRIVADA DE LA API KEY
+    // ==========================================
+    function saveApiKey() {
+        let key = document.getElementById('apiKeyInput').value.trim();
+        if (!key) return alert("Por favor ingresa una clave válida.");
+        localStorage.setItem('user_gemini_api_key', key);
+        document.getElementById('apiKeyInput').value = '';
+        checkApiKeyStatus();
+        alert("¡Clave guardada con éxito!");
+    }
+
+    function checkApiKeyStatus() {
+        let storedKey = localStorage.getItem('user_gemini_api_key');
+        let statusEl = document.getElementById('apiKeyStatus');
+        if (storedKey) {
+            statusEl.style.color = "#059669";
+            statusEl.innerText = "✅ API Key configurada y protegida en este navegador.";
+        } else {
+            statusEl.style.color = "#d97706";
+            statusEl.innerText = "⚠️ Advertencia: No hay API Key guardada.";
+        }
+    }
+
+    // ==========================================
+    // 2. ESTADO Y GAMIFICACIÓN (RACHA Y MONEDAS)
     // ==========================================
     let savedTasks = JSON.parse(localStorage.getItem('userTasks')) || [];
     let savedExams = JSON.parse(localStorage.getItem('userExams')) || [];
@@ -170,7 +205,7 @@
     }
 
     // ==========================================
-    // 2. NAVEGACIÓN Y UTILIDADES
+    // 3. NAVEGACIÓN Y UTILIDADES
     // ==========================================
     function showTab(tabName, btnElement) {
         document.querySelectorAll('.tab-section').forEach(sec => sec.classList.remove('active'));
@@ -189,7 +224,7 @@
     }
 
     // ==========================================
-    // 3. GESTIÓN DE TAREAS Y EXÁMENES
+    // 4. GESTIÓN DE TAREAS Y EXÁMENES
     // ==========================================
     function addNewTask() {
         let title = document.getElementById('taskTitle').value.trim();
@@ -237,38 +272,39 @@
     }
 
     // ==========================================
-    // 4. TUTOR ACADÉMICO INTELIGENTE Y PROFUNDO
+    // 5. CONEXIÓN REAL A LA API DE GEMINI
     // ==========================================
-    function generateDeepExplanation(title, details, type = 'tarea') {
-        const cleanTitle = title.charAt(0).toUpperCase() + title.slice(1);
-        const cleanDetails = details ? details : "Sin detalles adicionales específicos.";
+    async function askGemini(promptText) {
+        let apiKey = localStorage.getItem('user_gemini_api_key');
 
-        if (type === 'examen') {
-            return `📖 [Explicación Académica y Guía de Estudio Detallada]\n\n` +
-                   `🎯 **Tema Central**: ${cleanTitle}\n` +
-                   `🔍 **Enfoque de Evaluación**: ${cleanDetails}\n\n` +
-                   `💡 **1. Fundamentos Teóricos Explicados**:\n` +
-                   `Para dominar "${cleanTitle}", debes comprender que su eje central radica en analizar los principios fundamentales y su impacto práctico. ` +
-                   `Los conceptos clave que el profesor evaluará incluyen la definición formal, el contexto de aplicación y las variables críticas asociadas.\n\n` +
-                   `🛠️ **2. Desglose de Temas Clave para Estudiar**:\n` +
-                   `   • **Concepto y Origen**: Comprende qué es, cómo surge y por qué es relevante dentro de la materia.\n` +
-                   `   • **Fórmulas, Reglas o Estructuras**: Repasa los componentes exactos que aplican a este tema.\n` +
-                   `   • **Análisis Crítico**: Prepárate para argumentar ventajas, desventajas o implicaciones prácticas.\n\n` +
-                   `📝 **3. Consejo de Preparación Exprés**:\n` +
-                   `No te limites a memorizar. Intenta explicar este tema en voz alta estructurándolo en tres partes (Inicio, Desarrollo y Conclusión). Si puedes explicarlo sencillo, lo has dominado por completo.`;
-        } else {
-            return `📝 [Desarrollo y Asistencia Paso a Paso para la Tarea]\n\n` +
-                   `🎯 **Título**: ${cleanTitle}\n` +
-                   `📋 **Instrucciones Clave**: ${cleanDetails}\n\n` +
-                   `📚 **1. Marco Teórico Explicativo**:\n` +
-                   `El propósito de "${cleanTitle}" es desarrollar una investigación o resolución práctica basada en análisis riguroso. ` +
-                   `Para abordarlo con éxito, es vital establecer un marco conceptual claro que responda a la pregunta central del tema.\n\n` +
-                   `⚙️ **2. Guía de Redacción / Resolución Paso a Paso**:\n` +
-                   `   • **Paso 1 (Introducción)**: Presenta el tema definiendo los términos principales y el objetivo del trabajo.\n` +
-                   `   • **Paso 2 (Desarrollo y Argumentación)**: Desglosa los puntos principales. Si requiere datos o ejemplos, inclúyelos aquí para dar solidez.\n` +
-                   `   • **Paso 3 (Conclusión / Cierre)**: Redacta una síntesis personal o crítica que conecte lo aprendido con la realidad del área de estudio.\n\n` +
-                   `✨ **3. Recomendación Final**:\n` +
-                   `Sigue esta estructura formal para garantizar que tu trabajo cumpla con todos los criterios de excelencia académica. ¡Mucho éxito!`;
+        if (!apiKey) {
+            return "⚠️ Primero debes ingresar y guardar tu API Key de Gemini en la pestaña 'Inicio'.";
+        }
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                console.error("Error de la API:", data.error);
+                return "❌ Error de Google: " + (data.error.message || "Clave inválida o revocada. Genera una nueva clave limpia en AI Studio.");
+            }
+
+            if (data.candidates && data.candidates[0].content.parts[0].text) {
+                return data.candidates[0].content.parts[0].text;
+            } else {
+                return "❌ La IA no devolvió una respuesta válida.";
+            }
+        } catch (error) {
+            console.error("Error de red:", error);
+            return "❌ Error de red o bloqueo CORS al conectar con Gemini. Verifica tu conexión.";
         }
     }
 
@@ -278,13 +314,13 @@
 
         let btn = document.getElementById(`btn-task-${id}`);
         btn.disabled = true;
-        btn.innerText = "⏳ Generando explicación detallada...";
+        btn.innerText = "⏳ Consultando a la IA...";
 
-        setTimeout(() => {
-            task.guideText = generateDeepExplanation(task.title, task.desc, 'tarea');
-            localStorage.setItem('userTasks', JSON.stringify(savedTasks));
-            renderAll();
-        }, 300);
+        let prompt = `Actúa como un tutor académico experto. Explica detalladamente, da conceptos clave y estructura una guía paso a paso para resolver la tarea titulada "${task.title}". Detalles adicionales: "${task.desc}".`;
+        
+        task.guideText = await askGemini(prompt);
+        localStorage.setItem('userTasks', JSON.stringify(savedTasks));
+        renderAll();
     }
 
     async function generateExamStudy(id) {
@@ -293,17 +329,17 @@
 
         let btn = document.getElementById(`btn-exam-${id}`);
         btn.disabled = true;
-        btn.innerText = "⏳ Generando guía de estudio...";
+        btn.innerText = "⏳ Generando guía...";
 
-        setTimeout(() => {
-            exam.studyText = generateDeepExplanation(exam.title, exam.topics, 'examen');
-            localStorage.setItem('userExams', JSON.stringify(savedExams));
-            renderAll();
-        }, 300);
+        let prompt = `Actúa como un tutor académico experto. Genera una guía de estudio completa, con conceptos clave y estructura teórica para un ${exam.type} titulado "${exam.title}" sobre los temas: "${exam.topics}".`;
+        
+        exam.studyText = await askGemini(prompt);
+        localStorage.setItem('userExams', JSON.stringify(savedExams));
+        renderAll();
     }
 
     // ==========================================
-    // 5. RENDERIZADO VISUAL
+    // 6. RENDERIZADO VISUAL
     // ==========================================
     function renderAll() {
         // Tareas
@@ -316,7 +352,7 @@
                 </div>
                 <p style="font-size: 0.85rem;">${t.desc}</p>
                 <small>📅 Entrega: ${t.date}</small><br>
-                <button id="btn-task-${t.id}" class="btn-ai" onclick="generateTaskGuide(${t.id})">🤖 Explicación Detallada</button>
+                <button id="btn-task-${t.id}" class="btn-ai" onclick="generateTaskGuide(${t.id})">🤖 Ayuda de IA</button>
                 ${t.guideText ? `<div class="ai-guide-box">${t.guideText}</div>` : ''}
             </div>
         `).join('') || '<p style="color: #9ca3af;">No hay tareas registradas.</p>';
@@ -328,7 +364,7 @@
                 <div class="item-header"><strong>[${e.type}] ${e.title}</strong></div>
                 <p style="font-size: 0.85rem;">Temas: ${e.topics}</p>
                 <small style="color: red;">📅 Fecha: ${e.date}</small><br>
-                <button id="btn-exam-${e.id}" class="btn-ai" onclick="generateExamStudy(${e.id})">🤖 Guía de Estudio Profunda</button>
+                <button id="btn-exam-${e.id}" class="btn-ai" onclick="generateExamStudy(${e.id})">🤖 Generar Guía de Estudio</button>
                 ${e.studyText ? `<div class="ai-guide-box">${e.studyText}</div>` : ''}
             </div>
         `).join('') || '<p style="color: #9ca3af;">No hay exámenes programados.</p>';
@@ -342,6 +378,7 @@
     // Inicializar al cargar
     window.onload = () => {
         checkRacha();
+        checkApiKeyStatus();
         renderAll();
     };
 </script>
