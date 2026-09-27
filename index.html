@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AulaOrganizada - Versión Final Estable</title>
+    <title>AulaOrganizada - Definitiva</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f4f6f9; color: #333; }
@@ -272,7 +272,7 @@
     }
 
     // ==========================================
-    // 5. CONEXIÓN DIRECTA A LA API DE GEMINI (CON DIAGNÓSTICO)
+    // 5. CONEXIÓN DIRECTA A LA API DE GEMINI (CORREGIDA)
     // ==========================================
     async function askGemini(promptText) {
         let apiKey = localStorage.getItem('user_gemini_api_key');
@@ -280,7 +280,8 @@
             return "⚠️ Atención: No has guardado ninguna API Key en la pestaña 'Inicio'. Por favor ingrésala y guárdala.";
         }
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        // Usamos la ruta estable 'v1' y el modelo 'gemini-1.5-flash'
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
         try {
             const response = await fetch(url, {
@@ -368,7 +369,7 @@
                 <p style="font-size: 0.85rem;">Temas: ${e.topics}</p>
                 <small style="color: red;">📅 Fecha: ${e.date}</small><br>
                 <button id="btn-exam-${e.id}" class="btn-ai" onclick="generateExamStudy(${e.id})">🤖 Generar Guía de Estudio</button>
-                ${e.studyText ? `<div class="ai-guide-box">${e.studyText}</div>` : `</div>`}
+                ${e.studyText ? `<div class="ai-guide-box">${e.studyText}</div>` : ''}
             </div>
         `).join('') || '<p style="color: #9ca3af;">No hay exámenes programados.</p>';
 
