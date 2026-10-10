@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AulaOrganizada - Exámenes Inteligentes</title>
+    <title>AulaOrganizada - Versión Definitiva</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f4f6f9; color: #333; }
@@ -55,6 +55,16 @@
         .ai-guide-box { background: #eef2ff; border: 1px solid #c7d2fe; padding: 16px; border-radius: 8px; margin-top: 12px; white-space: pre-wrap; font-size: 0.95rem; color: #1e1b4b; line-height: 1.6; }
         .api-status { font-size: 0.85rem; margin-top: 5px; font-weight: bold; }
 
+        /* TIENDA Y AVATAR STYLES */
+        .avatar-preview-box { text-align: center; background: #eef2ff; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #c7d2fe; }
+        .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-top: 15px; }
+        .shop-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center; }
+        .shop-item h4 { font-size: 0.95rem; margin-bottom: 5px; color: #1f2937; }
+        .shop-item p { font-size: 0.85rem; color: #d97706; margin-bottom: 10px; font-weight: bold; }
+        .shop-btn { background: #4f46e5; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold; width: 100%; }
+        .shop-btn.owned { background: #10b981; cursor: default; }
+        .shop-btn:hover:not(.owned) { background: #4338ca; }
+
         /* MODAL DE EXAMEN */
         #quizModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
         .quiz-content { background: white; width: 100%; max-width: 600px; padding: 25px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
@@ -79,6 +89,7 @@
         <button class="menu-btn active" onclick="showTab('inicio', this)">🏠 Inicio</button>
         <button class="menu-btn" onclick="showTab('tareas', this)">📝 Tareas</button>
         <button class="menu-btn" onclick="showTab('examenes', this)">📅 Exámenes</button>
+        <button class="menu-btn" onclick="showTab('avatar', this)">👤 Mi Avatar & Tienda</button>
     </div>
 
     <div class="content">
@@ -144,6 +155,22 @@
                 <div id="examListContainer"></div>
             </div>
         </div>
+
+        <!-- PESTAÑA AVATAR & TIENDA -->
+        <div id="tab-avatar" class="tab-section">
+            <h1>Personalización y Tienda de Avatares</h1>
+            <p style="color: #6b7280; margin-bottom: 20px;">Usa tus monedas ganadas para desbloquear estilos únicos.</p>
+            
+            <div class="avatar-preview-box">
+                <h3 style="color: #4f46e5; margin-bottom: 10px;">🌟 Tu Avatar Actual</h3>
+                <p id="currentAvatarDesc" style="font-size: 1.1rem; font-weight: bold; color: #1f2937;">Base Predeterminada</p>
+            </div>
+
+            <div class="card">
+                <h3>🎨 Tienda de Estilos y Accesorios</h3>
+                <div id="shopContainer" class="shop-grid"></div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -183,7 +210,7 @@
     }
 
     // ==========================================
-    // 2. ESTADO Y GAMIFICACIÓN
+    // 2. ESTADO, GAMIFICACIÓN Y TIENDA DE AVATARES
     // ==========================================
     let savedTasks = JSON.parse(localStorage.getItem('userTasks')) || [];
     let savedExams = JSON.parse(localStorage.getItem('userExams')) || [];
@@ -191,6 +218,26 @@
     let monedas = parseInt(localStorage.getItem('userMonedas')) || 0;
     let racha = parseInt(localStorage.getItem('userRacha')) || 0;
     let lastLogin = localStorage.getItem('lastLoginDate');
+
+    let unlockedItems = JSON.parse(localStorage.getItem('userUnlocked')) || ['base_fem', 'piel_claro', 'pelo_lacio_nat'];
+    let currentEquipped = JSON.parse(localStorage.getItem('userEquipped')) || { base: 'Avatar Femenino Base', skin: 'Piel Clara', hair: 'Largo Lacio (Castaño)' };
+
+    const shopItems = [
+        { id: 'base_fem', name: 'Avatar Femenino Base', type: 'base', price: 0, desc: 'Base predeterminada femenina.' },
+        { id: 'base_masc', name: 'Avatar Masculino Base', type: 'base', price: 0, desc: 'Base predeterminada masculina.' },
+        { id: 'piel_claro', name: 'Piel Clara', type: 'skin', price: 0, desc: 'Tono claro natural.' },
+        { id: 'piel_medio', name: 'Piel Media Cálida', type: 'skin', price: 20, desc: 'Tono medio cálido.' },
+        { id: 'piel_oscuro', name: 'Piel Oscura', type: 'skin', price: 30, desc: 'Tono oscuro profundo.' },
+        { id: 'pelo_lacio_nat', name: 'Largo Lacio (Castaño)', type: 'hair', price: 0, desc: 'Estilo lacio clásico.' },
+        { id: 'pelo_rizado', name: 'Rizado con Trenzas', type: 'hair', price: 25, desc: 'Estilo trenzado detallado.' },
+        { id: 'pelo_azul', name: 'Cabello Azul Fantasía', type: 'hair', price: 50, desc: 'Estilo color azul brillante.' },
+        { id: 'pelo_multi', name: 'Cabello Multicolor', type: 'hair', price: 60, desc: 'Estilo único arcoíris.' },
+        { id: 'acc_gorra', name: 'Gorra Estilizada', type: 'acc', price: 20, desc: 'Gorra casual de diseño.' },
+        { id: 'acc_gafas', name: 'Gafas de Sol', type: 'acc', price: 30, desc: 'Gafas oscuras modernas.' },
+        { id: 'acc_mochila', name: 'Mochila Gamer', type: 'acc', price: 40, desc: 'Mochila escolar avanzada.' },
+        { id: 'acc_corona', name: 'Corona Real', type: 'acc', price: 60, desc: 'Corona dorada de honor.' },
+        { id: 'acc_alas', name: 'Alas Mágicas', type: 'acc', price: 60, desc: 'Alas decorativas de fantasía.' }
+    ];
 
     function checkRacha() {
         const today = new Date().toDateString();
@@ -214,11 +261,61 @@
         localStorage.setItem('userMonedas', monedas);
         updateStatsUI();
         alert(`¡Has ganado ${cantidad} monedas 🪙! Total: ${monedas}`);
+        renderShop();
     }
 
     function updateStatsUI() {
         document.getElementById('rachaDisplay').innerText = racha + " días";
         document.getElementById('monedasDisplay').innerText = monedas;
+        let accText = currentEquipped.acc ? ` | ${currentEquipped.acc}` : '';
+        document.getElementById('currentAvatarDesc').innerText = `${currentEquipped.base} | ${currentEquipped.skin} | ${currentEquipped.hair}${accText}`;
+    }
+
+    function buyOrEquipItem(id) {
+        let item = shopItems.find(i => i.id === id);
+        if (!item) return;
+
+        if (unlockedItems.includes(id)) {
+            if (item.type === 'base') currentEquipped.base = item.name;
+            if (item.type === 'skin') currentEquipped.skin = item.name;
+            if (item.type === 'hair') currentEquipped.hair = item.name;
+            if (item.type === 'acc') currentEquipped.acc = item.name;
+            
+            localStorage.setItem('userEquipped', JSON.stringify(currentEquipped));
+            updateStatsUI();
+            renderShop();
+            alert(`¡Has equipado: ${item.name}!`);
+        } else {
+            if (monedas >= item.price) {
+                monedas -= item.price;
+                localStorage.setItem('userMonedas', monedas);
+                unlockedItems.push(id);
+                localStorage.setItem('userUnlocked', JSON.stringify(unlockedItems));
+                updateStatsUI();
+                renderShop();
+                alert(`🎉 ¡Has comprado con éxito: ${item.name}!`);
+            } else {
+                alert(`❌ No tienes suficientes monedas. Te faltan ${item.price - monedas} 🪙.`);
+            }
+        }
+    }
+
+    function renderShop() {
+        let shopCont = document.getElementById('shopContainer');
+        shopCont.innerHTML = shopItems.map(item => {
+            let isOwned = unlockedItems.includes(item.id);
+            let btnText = isOwned ? "Equipar ✅" : `Comprar (${item.price} 🪙)`;
+            let btnClass = isOwned ? "shop-btn owned" : "shop-btn";
+            
+            return `
+                <div class="shop-item">
+                    <h4>${item.name}</h4>
+                    <p>${item.price === 0 ? 'Gratis' : item.price + ' 🪙'}</p>
+                    <p style="font-size: 0.75rem; color: #6b7280; margin-bottom: 8px;">${item.desc}</p>
+                    <button class="${btnClass}" onclick="buyOrEquipItem('${item.id}')">${btnText}</button>
+                </div>
+            `;
+        }).join('');
     }
 
     // ==========================================
@@ -264,7 +361,7 @@
         if (task) {
             task.completed = !task.completed;
             if(task.completed) {
-                addMonedas(5); // 5 monedas por terminar tarea
+                addMonedas(5);
             }
         }
         localStorage.setItem('userTasks', JSON.stringify(savedTasks));
@@ -289,28 +386,29 @@
     }
 
     // ==========================================
-    // 5. CONEXIÓN CON GEMINI 3.8 FLASH
+    // 5. CONEXIÓN CON GEMINI (CON REINTENTO)
     // ==========================================
-    async function askGemini(promptText) {
+    async function askGemini(promptText, retries = 3) {
         let apiKey = localStorage.getItem('user_gemini_api_key');
-        if (!apiKey) {
-            return "⚠️ Atención: No has guardado ninguna API Key en la pestaña 'Inicio'.";
-        }
+        if (!apiKey) return "⚠️ Atención: No has guardado ninguna API Key en la pestaña 'Inicio'.";
 
-        try {
-            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
-            });
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
 
-            const data = await response.json();
-            if (data.error) throw new Error(data.error.message);
-            return data.candidates[0].content.parts[0].text;
-        } catch (error) {
-            console.error("Error:", error);
-            return `❌ Error de Google: ${error.message}`;
+        for (let i = 0; i < retries; i++) {
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+                return data.candidates[0].content.parts[0].text;
+            } catch (error) {
+                if (i === retries - 1) return `❌ Servidores ocupados. Intenta de nuevo en unos segundos.`;
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
         }
     }
 
@@ -343,7 +441,7 @@
     }
 
     // ==========================================
-    // 6. EXÁMENES INTELIGENTES CON TIEMPO Y MONEDAS
+    // 6. EXÁMENES INTELIGENTES Y MONEDAS
     // ==========================================
     let currentQuiz = null;
     let quizTimerInterval = null;
@@ -354,17 +452,14 @@
         if (!apiKey) return alert("Guarda tu API Key en 'Inicio' primero.");
 
         document.getElementById('quizModalTitle').innerText = `Examen: ${topicTitle}`;
-        document.getElementById('quizFormContainer').innerHTML = "<p>⏳ La IA está analizando el tema y creando tu examen...</p>";
+        document.getElementById('quizFormContainer').innerHTML = "<p>⏳ La IA está creando tu examen...</p>";
         document.getElementById('quizModal').style.display = "flex";
 
-        let prompt = `Eres un profesor experto y exigente. Basándote en el siguiente tema/explicación: "${sourceText}", genera un examen de práctica.
-        - Las preguntas deben ser principalmente de opción múltiple (A, B, C).
-        - REGLA DE JUSTIFICACIÓN: **Solo** incluye una pregunta de justificación o análisis abierto si el tema realmente lo amerita (por ejemplo, conceptos complejos, argumentación, opiniones o casos donde una simple opción múltiple no sea suficiente). Si el tema es directo, factual o de definiciones simples, **no** incluyas preguntas de justificación innecesarias y haz todo de opción múltiple.
-        Responde estrictamente en formato JSON válido, sin texto adicional alrededor, usando esta estructura de lista:
+        let prompt = `Eres un profesor experto. Basándote en este texto: "${sourceText}", genera un examen de práctica con preguntas de opción múltiple (A, B, C). Responde estrictamente en formato JSON válido, sin texto adicional:
         [
           {
             "tipo": "opcion",
-            "pregunta": "¿Texto de la pregunta?",
+            "pregunta": "¿Pregunta?",
             "opciones": ["A) ...", "B) ...", "C) ..."],
             "correcta": "A"
           }
@@ -377,7 +472,6 @@
             renderQuizForm();
             startQuizTimer();
         } catch (e) {
-            console.error(e, rawResponse);
             document.getElementById('quizFormContainer').innerHTML = `<p style="color:red;">Error al generar el examen. Intenta de nuevo.</p>`;
         }
     }
@@ -386,14 +480,10 @@
         let html = "";
         currentQuiz.forEach((q, idx) => {
             html += `<div class="question-block"><p>${idx + 1}. ${q.pregunta}</p>`;
-            if (q.tipo === "opcion") {
-                q.opciones.forEach(opt => {
-                    let optLetter = opt.charAt(0);
-                    html += `<label class="options-label"><input type="radio" name="q_${idx}" value="${optLetter}"> ${opt}</label>`;
-                });
-            } else {
-                html += `<textarea name="q_${idx}" placeholder="Explica o justifica tu respuesta aquí..."></textarea>`;
-            }
+            q.opciones.forEach(opt => {
+                let optLetter = opt.charAt(0);
+                html += `<label class="options-label"><input type="radio" name="q_${idx}" value="${optLetter}"> ${opt}</label>`;
+            });
             html += `</div>`;
         });
         document.getElementById('quizFormContainer').innerHTML = html;
@@ -422,20 +512,17 @@
         let totalOptionQuestions = 0;
 
         currentQuiz.forEach((q, idx) => {
-            if (q.tipo === "opcion") {
-                totalOptionQuestions++;
-                let selected = document.querySelector(`input[name="q_${idx}"]:checked`);
-                if (selected && selected.value === q.correcta) {
-                    correctCount++;
-                }
+            totalOptionQuestions++;
+            let selected = document.querySelector(`input[name="q_${idx}"]:checked`);
+            if (selected && selected.value === q.correcta) {
+                correctCount++;
             }
         });
 
-        // Calcular monedas: máximo 20 monedas proporcionales a los aciertos
         let earnedCoins = totalOptionQuestions > 0 ? Math.round((correctCount / totalOptionQuestions) * 20) : 15;
         addMonedas(earnedCoins);
 
-        alert(`📊 Resultado del examen:\nAciertos: ${correctCount} de ${totalOptionQuestions}\n¡Has ganado ${earnedCoins} monedas 🪙!`);
+        alert(`📊 Resultado:\nAciertos: ${correctCount} de ${totalOptionQuestions}\n¡Has ganado ${earnedCoins} monedas 🪙!`);
         document.getElementById('quizModal').style.display = "none";
     }
 
@@ -443,7 +530,6 @@
     // 7. RENDERIZADO VISUAL
     // ==========================================
     function renderAll() {
-        // Tareas
         let taskCont = document.getElementById('taskListContainer');
         taskCont.innerHTML = savedTasks.map(t => `
             <div class="item-card ${t.completed ? 'completed' : ''}">
@@ -459,7 +545,6 @@
             </div>
         `).join('') || '<p style="color: #9ca3af;">No hay tareas registradas.</p>';
 
-        // Exámenes
         let examCont = document.getElementById('examListContainer');
         examCont.innerHTML = savedExams.map(e => `
             <div class="item-card exam-type">
@@ -472,7 +557,6 @@
             </div>
         `).join('') || '<p style="color: #9ca3af;">No hay exámenes programados.</p>';
 
-        // Resumen Inicio
         let homeTask = document.getElementById('homeTaskList');
         let pending = savedTasks.filter(t => !t.completed);
         homeTask.innerHTML = pending.map(t => `<div style="padding: 6px 0; border-bottom: 1px solid #e2e8f0;"><strong>${t.title}</strong> - <small style="color: #4f46e5;">📅 ${t.date}</small></div>`).join('') || '<p style="color: #9ca3af;">Todo al día 🎉</p>';
@@ -482,6 +566,7 @@
         checkRacha();
         checkApiKeyStatus();
         renderAll();
+        renderShop();
     };
 </script>
 
