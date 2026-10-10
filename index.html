@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AulaOrganizada - Con Exámenes Interactivos</title>
+    <title>AulaOrganizada - Exámenes Inteligentes</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f4f6f9; color: #333; }
@@ -343,7 +343,7 @@
     }
 
     // ==========================================
-    // 6. EXÁMENES INTERACTIVOS CON TIEMPO Y MONEDAS
+    // 6. EXÁMENES INTELIGENTES CON TIEMPO Y MONEDAS
     // ==========================================
     let currentQuiz = null;
     let quizTimerInterval = null;
@@ -354,27 +354,24 @@
         if (!apiKey) return alert("Guarda tu API Key en 'Inicio' primero.");
 
         document.getElementById('quizModalTitle').innerText = `Examen: ${topicTitle}`;
-        document.getElementById('quizFormContainer').innerHTML = "<p>⏳ La IA está creando tu examen personalizado...</p>";
+        document.getElementById('quizFormContainer').innerHTML = "<p>⏳ La IA está analizando el tema y creando tu examen...</p>";
         document.getElementById('quizModal').style.display = "flex";
 
-        let prompt = `Eres un profesor estricto. Basándote en el siguiente tema/texto: "${sourceText}", genera exactamente 3 preguntas de opción múltiple (A, B, C) y 1 pregunta de justificación corta. 
-        Debes responder estrictamente en formato JSON válido, sin texto adicional alrededor, con esta estructura exacta:
+        let prompt = `Eres un profesor experto y exigente. Basándote en el siguiente tema/explicación: "${sourceText}", genera un examen de práctica.
+        - Las preguntas deben ser principalmente de opción múltiple (A, B, C).
+        - REGLA DE JUSTIFICACIÓN: **Solo** incluye una pregunta de justificación o análisis abierto si el tema realmente lo amerita (por ejemplo, conceptos complejos, argumentación, opiniones o casos donde una simple opción múltiple no sea suficiente). Si el tema es directo, factual o de definiciones simples, **no** incluyas preguntas de justificación innecesarias y haz todo de opción múltiple.
+        Responde estrictamente en formato JSON válido, sin texto adicional alrededor, usando esta estructura de lista:
         [
           {
             "tipo": "opcion",
             "pregunta": "¿Texto de la pregunta?",
             "opciones": ["A) ...", "B) ...", "C) ..."],
             "correcta": "A"
-          },
-          {
-            "tipo": "justificacion",
-            "pregunta": "¿Pregunta que requiere explicación o justificación corta?"
           }
         ]`;
 
         let rawResponse = await askGemini(prompt);
         try {
-            // Limpiar formato markdown si la IA lo incluye
             let cleanJson = rawResponse.replace(/```json/g, '').replace(/```/g, '').trim();
             currentQuiz = JSON.parse(cleanJson);
             renderQuizForm();
@@ -395,7 +392,7 @@
                     html += `<label class="options-label"><input type="radio" name="q_${idx}" value="${optLetter}"> ${opt}</label>`;
                 });
             } else {
-                html += `<textarea name="q_${idx}" placeholder="Escribe tu justificación aquí..."></textarea>`;
+                html += `<textarea name="q_${idx}" placeholder="Explica o justifica tu respuesta aquí..."></textarea>`;
             }
             html += `</div>`;
         });
@@ -434,8 +431,8 @@
             }
         });
 
-        // Calcular monedas: máximo 20 monedas basadas en aciertos
-        let earnedCoins = totalOptionQuestions > 0 ? Math.round((correctCount / totalOptionQuestions) * 20) : 10;
+        // Calcular monedas: máximo 20 monedas proporcionales a los aciertos
+        let earnedCoins = totalOptionQuestions > 0 ? Math.round((correctCount / totalOptionQuestions) * 20) : 15;
         addMonedas(earnedCoins);
 
         alert(`📊 Resultado del examen:\nAciertos: ${correctCount} de ${totalOptionQuestions}\n¡Has ganado ${earnedCoins} monedas 🪙!`);
